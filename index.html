@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>React</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+ 
+  <script type="importmap">
+    {
+      "imports": {
+        "html-to-image": "https://esm.sh/html-to-image?dev",
+        "react": "https://esm.sh/react@19.0.0?dev",
+        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client?dev&external=react",
+        "react-dom": "https://esm.sh/react-dom@19.0.0?dev&external=react",
+        "react-router-dom": "https://esm.sh/react-router-dom@7.2.0?dev&external=react,react-dom,react-dom/client",
+        "valtio": "https://esm.sh/valtio?dev&external=react,react-dom,react-dom/client",
+        "valtio/utils": "https://esm.sh/valtio/utils?dev&external=react,react-dom,react-dom/client",
+        "react/jsx-runtime": "https://esm.sh/react/jsx-runtime?dev&external=react,react-dom,react-dom/client",
+        "@emotion/react": "https://esm.sh/@emotion/react@11.11.1?dev&external=react,react-dom,react-dom/client",
+        "@emotion/styled": "https://esm.sh/@emotion/styled@11.11.0?dev&external=react,react-dom,react-dom/client",
+        "@mui/material": "https://esm.sh/@mui/material@5.14.12?dev&external=react,react-dom,react-dom/client",
+        "@mui/icons-material": "https://esm.sh/@mui/icons-material@5.14.12?dev&external=react,react-dom,react-dom/client",
+        "firebase/app": "https://esm.sh/firebase/app?dev",
+        "firebase/auth": "https://esm.sh/firebase/auth?dev",
+        "firebase/firestore": "https://esm.sh/firebase/firestore?dev",
+        "firebase/messaging": "https://esm.sh/firebase/messaging?dev",
+        "firebase/storage": "https://esm.sh/firebase/storage?dev"
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    ::-webkit-scrollbar-button {
+      display: none;
+    }
+  </style>
+
+
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script>
+    window.utils = {
+      lastCodes: {},
+      dynamicImport: async (url) => await import(URL.createObjectURL(new Blob([(utils.transform(await (await fetch(url + '?_=' + Date.now())).text()))], { type: 'text/javascript' }))),
+      transform: typeof sucrase != 'undefined' ? (code) => sucrase.transform(code, { transforms: ['jsx'] }).code : (code) => Babel.transform(code, { presets: ['react'] }).code,
+      evalScript: (code, type = "text/javascript") => { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.type = type; if (code.startsWith("http")) { script.src = code; script.onload = () => resolve(script); script.onerror = () => reject(new Error(`Failed to load script: ${code}`)); } else { script.textContent = code; script.onload = () => resolve(script); setTimeout(resolve, 0); } document.body.appendChild(script); }); },
+      log: (...args) => (console.log(...args), args[args.length - 1]),
+      poll: (fn, interval = 500) => new Promise((r) => { let intv = setInterval(() => (window.tmp = fn()) instanceof Promise ? window.tmp.then(res => res && (clearInterval(intv) || console.log(res) || r(res))) : window.tmp && (clearInterval(intv) || r(window.tmp)), interval) }),
+      frame: (fn) => new Promise((r) => { const check = () => { const res = fn(); res instanceof Promise ? res.then(x => x ? (console.log(x) || r(x)) : requestAnimationFrame(check)) : res ? r(res) : requestAnimationFrame(check) }; requestAnimationFrame(check); }),
+      safe: (fn) => { try { return (window.tmp = fn()) instanceof Promise ? new Promise((r) => window.tmp.then(r).catch(e => console.log('[SAFE]', e))) : window.tmp } catch (e) { console.log('[SAFE]', e) } },
+      subscribe: (fn, cb, interval = 500) => { let last = -Infinity; let intv = setInterval(() => (window.tmp = fn()) instanceof Promise ? window.tmp.then(res => (last != res) && (last = res) & cb(res)) : (last != window.tmp) && (last = window.tmp) & cb(window.tmp), interval) },
+      notify: (title = "", body = "", color = "#3B82F6", timeout = 5000) => { const c = document.querySelector(".notifications-container") || (() => { const el = document.createElement("div"); Object.assign(el.style, { position: "fixed", top: "16px", right: "16px", display: "flex", flexDirection: "column", gap: "12px", zIndex: "99999999", maxWidth: "320px", width: "100%" }); el.className = "notifications-container"; document.body.appendChild(el); return el; })(); const n = document.createElement("div"); Object.assign(n.style, { display: "flex", flexDirection: "column", padding: "16px", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)", pointerEvents: "auto", transform: "translateY(-15px)", opacity: "0", transition: "transform 0.3s ease-out, opacity 0.3s ease-out", color: "#333", background: "white", border: "1px solid rgba(0, 0, 0, 0.1)", borderLeft: `4px solid ${color}` }); const h = document.createElement("div"); Object.assign(h.style, { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: body ? "8px" : "0" }); const t = document.createElement("div"); t.textContent = title; Object.assign(t.style, { fontWeight: "600", fontSize: "14px" }); const closeBtn = document.createElement("button"); closeBtn.innerHTML = "&#10005;"; Object.assign(closeBtn.style, { background: "none", border: "none", color: "#9CA3AF", cursor: "pointer", fontSize: "14px", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px", borderRadius: "4px", marginLeft: "8px" }); closeBtn.onmouseover = () => { closeBtn.style.backgroundColor = "rgba(0, 0, 0, 0.05)"; }; closeBtn.onmouseout = () => { closeBtn.style.backgroundColor = "transparent"; }; closeBtn.onclick = () => removeNotif(n); h.appendChild(t); h.appendChild(closeBtn); n.appendChild(h); if (body) { const b = document.createElement("div"); b.textContent = body; Object.assign(b.style, { fontSize: "13px", color: "#4B5563", lineHeight: "1.5" }); n.appendChild(b); } c.appendChild(n); requestAnimationFrame(() => { n.style.transform = "translateY(0)"; n.style.opacity = "1"; }); const timeoutRef = setTimeout(() => removeNotif(n), timeout); function removeNotif(element) { clearTimeout(timeoutRef); element.style.height = element.offsetHeight + "px"; element.style.marginBottom = getComputedStyle(element).marginBottom; requestAnimationFrame(() => { element.style.height = "0"; element.style.marginBottom = "0"; element.style.padding = "0"; element.style.opacity = "0"; element.style.overflow = "hidden"; element.style.border = "none"; }); setTimeout(() => element.remove(), 300); Array.from(c.children).forEach(child => { if (child !== element) child.style.transition = "transform 0.3s ease-out"; }); } return n; },
+    };
+
+  </script>
+
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script data-type="module" type="text/babel">
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
+    import { proxy, ref } from 'valtio';
+    import { useProxy } from 'valtio/utils';
+    import { Button, ThemeProvider, createTheme, Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, BottomNavigation, BottomNavigationAction } from '@mui/material';
+    import { initializeApp } from 'firebase/app';
+    import { getAuth } from 'firebase/auth';
+    import { getFirestore } from 'firebase/firestore';
+    import { getMessaging, getToken, onMessage } from "firebase/messaging";
+    import { getStorage } from 'firebase/storage';
+    import * as Icons from '@mui/icons-material';
+
+    const { default: HomePage } = await utils.dynamicImport('HomePage.jsx');
+    const { default: SettingsPage } = await utils.dynamicImport('SettingsPage.jsx');
+
+    let serviceAccountFirebase = {
+      apiKey: "AIzaSyCWzeya7dZmsE7XkQvOECKEXXarsMKgmH4",
+      authDomain: "test-firebase-987-12.firebaseapp.com",
+      projectId: "test-firebase-987-12",
+      storageBucket: "test-firebase-987-12.firebasestorage.app",
+      messagingSenderId: "103938328487",
+      appId: "1:103938328487:web:4981246a266858253d1882",
+      measurementId: "G-7DM0BMGDZD"
+    };
+
+
+    window.state = proxy({});
+
+    window.fetchRoutine = (async () => {
+
+      const apiKey = "AIzaSyC-Ix2xopfJqdj74UE7zCVY1mr63B9p2lE";
+      const spreadsheetId = "1VIteFcuXzX1FwjnY08QiLS40o7-oHZ50xAzbo-8Dk7c";
+      const range = "Sheet1";
+      const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}&valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER&_=${Date.now()}`;
+      const sheetData = await (await fetch(sheetUrl)).json();
+      const { modifiedTime } = await (await fetch(`https://www.googleapis.com/drive/v3/files/${spreadsheetId}?fields=modifiedTime&key=${apiKey}`)).json();
+
+      state.spreadsheetId = spreadsheetId;
+      state.sheetData = sheetData;
+      state.modifiedTime = modifiedTime;
+
+    });
+
+    window.fetchRoutine();
+
+
+    onMessage(getMessaging(initializeApp(serviceAccountFirebase)), (payload) => {
+      console.log('Message received. ', payload);
+      utils.notify(payload.notification.title, payload.notification.body);
+      window.fetchRoutine();
+    });
+
+
+    function App() {
+      const proxyState = useProxy(state);
+
+      return (
+        <div className={`h-[${window.innerHeight}px] flex flex-col w-full`} >
+          <Router>
+            <div className="z-10 !shadow-[0_2px_4px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-4xl md:max-w-full mx-auto sticky top-0" >
+              {proxyState.appBar || (
+                <div className="bg-blue-600 px-6 py-4">
+                  <div className="w-full max-w-4xl mx-auto">
+                    <Typography variant="h5" className="text-white font-medium">
+                      Automated Class Routine
+                    </Typography>
+                    <Typography variant="body2" className="text-blue-100 mt-1">
+                      Semester: <a href="#" className="text-white hover:underline">Spring 2025</a>
+                    </Typography>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className={`w-full grow flex flex-col overflow-auto relative `}>
+              <div className={`w-full grow flex flex-col max-w-4xl mx-auto `}>
+                {/* App Bar */}
+
+                <div className="flex grow overflow-auto w-full">
+                  {/* Desktop Left Sidenav */}
+                  <div className='hidden md:block  w-64 shrink-0'>
+                    <div className='hidden md:block shrink-0 border-r border-gray-200 fixed w-64 h-full'>
+                      <List>
+                        <ListItem disablePadding>
+                          <ListItemButton component={Link} to="/">
+                            <ListItemIcon>
+                              <Icons.Home />
+                            </ListItemIcon>
+                            <ListItemText primary="Home" />
+                          </ListItemButton>
+                        </ListItem>
+                        <ListItem disablePadding>
+                          <ListItemButton component={Link} to="/notifications">
+                            <ListItemIcon>
+                              <Icons.Notifications />
+                            </ListItemIcon>
+                            <ListItemText primary="Notifications" />
+                          </ListItemButton>
+                        </ListItem>
+                      </List>
+                    </div>
+                  </div>
+
+                  {/* Routes */}
+                  <main className="container h-full overflow-auto mx-auto">
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/notifications" element={<SettingsPage />} />
+                    </Routes>
+                  </main>
+                </div>
+
+                {/* Mobile Bottom Nav */}
+              </div>
+            </div>
+            <BottomNavigation
+              className="z-10 sticky bottom-0 !shrink-0 !shadow-[0_-2px_4px_rgba(0,0,0,0.1)] md:!hidden"
+              showLabels
+            >
+              <BottomNavigationAction component={Link} to="/" label="Home" icon={<Icons.Home />} />
+              <BottomNavigationAction component={Link} to="/notifications" label="Notifications" icon={<Icons.Notifications />} />
+            </BottomNavigation>
+          </Router>
+        </div>
+      );
+    }
+
+
+    class ErrorBoundary extends React.Component {
+      state = { hasError: false, error: null, errorInfo: null, remaining: 5000 };
+      componentDidCatch(error, errorInfo) {
+        this.setState({ hasError: true, error, errorInfo, remaining: 5000 }, () => { });
+      }
+      render() {
+        const { hasError, error, errorInfo, remaining } = this.state;
+        return hasError ? React.createElement("div", { className: "text-xs full border border-red-500 bg-black text-white p-2 break-words w-screen dark:bg-gray-800 dark:text-gray-200" },
+          React.createElement("div", { className: "font-mono" }, "Retrying in ", remaining, "ms"),
+          React.createElement("pre", { className: "whitespace-no-wrap overflow-x-scroll" },
+            React.createElement("div", { className: "text-red-500 text-lg font-bold" }, error?.toString() || "Unknown Error"),
+            React.createElement("div", { className: "" }, errorInfo?.componentStack.split("\\n").slice(0, 5).join("\\n") || "Stack finding error")
+          )
+        ) : this.props.children;
+      }
+    }
+
+
+
+    window.render = function render() {
+      if (!window.rootEl) window.rootEl = createRoot(document.getElementById('root'));
+      window.rootEl.render(
+        window.location.protocol == 'http:' && <ErrorBoundary>
+          <App />
+        </ErrorBoundary> || <App />
+      );
+    }
+
+    render();
+  </script>
+
+</body>
+
+</html>
