@@ -20,6 +20,7 @@ import {
   Chip,
   Autocomplete,
 } from '@mui/material';
+import * as Icons from '@mui/icons-material';
 
 
 let serviceAccountFirebase = {
@@ -273,13 +274,15 @@ function extractRoutine(json) {
 
 let loadPrefs = (async () => {
   let currentToken = localStorage.notificationToken;
-  let data = await (await fetch(`https://test-firebase-987-12-default-rtdb.asia-southeast1.firebasedatabase.app/subscriptions/${currentToken}.json`)).json();
+  let data = await (await fetch(`https://nub-live-default-rtdb.asia-southeast1.firebasedatabase.app/preferences/${state.user.uid}.json`)).json();
   if (!data) data = {
     enabled: false,
+    emailEnabled: false,
     tags: []
   }
   else data = (data);
   state.pushEnabled = (data.enabled);
+  state.emailEnabled = (data.emailEnabled || false);
   state.sectionTags = (data.tags?.section || []);
   state.courseTags = (data.tags?.course || []);
   state.teacherTags = (data.tags?.teacher || []);
@@ -294,22 +297,38 @@ const NotificationSettings = () => {
   });
 
   useEffect(() => {
-    loadPrefs();
-  }, []);
+    // Sign in anonymously if not logged in
+    if (!proxyState.user) {
+      console.log("SettingsPage: User not logged in, signing in anonymously");
+      window.signInAnonymously().then(() => {
+        loadPrefs();
+      });
+    } else {
+      loadPrefs();
+    }
+  }, [proxyState.user]);
 
   const subscribeNotifications = async () => {
-    const app = initializeApp(serviceAccountFirebase);
     const messaging = getMessaging(app);
-    const vapidKey = 'BIpLhKhJvU2sqQqd6HJ7KR9SCpq03Qip2fJhI-kjVop9cprE5b_05y36yEJkfPWYteyBnpB1FtpOcqG3vTg_MP0';
+    const vapidKey = 'BCEN0u1we7DrnyE69CdtFB6_71zQ9fVlrcmxgxFlAKWIXw8Wwl4_s25G4r7QnCwD4iMJMYleFMpIjCD99HAQ5mA';
 
     const currentToken = await getToken(messaging, { vapidKey });
+    console.log(currentToken);
     localStorage.notificationToken = currentToken;
 
     const permissionGranted = await Notification.requestPermission() === 'granted';
-    if (!currentToken || !permissionGranted) return;
+    if (!currentToken && permissionGranted && proxyState.pushEnabled) {
+      utils.notify('Push notifications could not be enabled', 'Please check your browser settings', '#F44336');
+      return;
+    }
 
     const subscriptionData = {
+      id: state.user.uid,
+      utctimestamp: Date.now(),
+      anonymous: state.user.isAnonymous,
       enabled: !!proxyState.pushEnabled,
+      emailEnabled: !!proxyState.emailEnabled,
+      email: state.user.email,
       token: currentToken,
       tags: {
         section: proxyState.sectionTags,
@@ -319,8 +338,7 @@ const NotificationSettings = () => {
     };
 
     try {
-      const endpoint = 'https://test-firebase-987-12-default-rtdb.asia-southeast1.firebasedatabase.app/subscriptions/';
-      await fetch(`${endpoint}${currentToken}.json`, {
+      await fetch(`https://nub-live-default-rtdb.asia-southeast1.firebasedatabase.app/preferences/${state.user.uid}.json`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(subscriptionData)
@@ -333,10 +351,15 @@ const NotificationSettings = () => {
     }
   };
 
-  const handlePushToggle = async (event) => {
+  const handlePushToggle = async () => {
     const permissionGranted = await Notification.requestPermission() === 'granted';
     if (!permissionGranted) return utils.notify?.('Notification permission not granted', 'Change from Site Settings');
     proxyState.pushEnabled = !proxyState.pushEnabled;
+    subscribeNotifications();
+  };
+
+  const handleEmailToggle = async () => {
+    proxyState.emailEnabled = !proxyState.emailEnabled;
     subscribeNotifications();
   };
 
@@ -363,6 +386,7 @@ const NotificationSettings = () => {
 
   // Check if data is loaded
   const isLoading = proxyState.pushEnabled == null ||
+    proxyState.emailEnabled == null ||
     proxyState.sectionTags == null ||
     proxyState.courseTags == null ||
     proxyState.teacherTags == null;
@@ -393,7 +417,16 @@ const NotificationSettings = () => {
       <Paper elevation={0} className="max-w-3xl mx-auto rounded-lg overflow-hidden">
 
         <div className="p-6">
-          {/* Main Toggle */}
+          {/* Anonymous user message */}
+          {proxyState.isAnonymous && (
+            <Box className="mb-4 p-2 bg-blue-50 rounded-md">
+              <Typography variant="body2" color="primary">
+                You are currently using the app anonymously. <a href="#/auth" className="text-blue-600 underline">Sign in</a> to save your preferences.
+              </Typography>
+            </Box>
+          )}
+
+          {/* Push Notifications Toggle */}
           <Paper elevation={0} className="mb-6 p-4 border border-gray-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -407,6 +440,31 @@ const NotificationSettings = () => {
               <Switch
                 checked={proxyState.pushEnabled}
                 onChange={handlePushToggle}
+                color="primary"
+              />
+            </div>
+          </Paper>
+
+          {/* Email Notifications Toggle */}
+          <Paper elevation={0} className="mb-6 p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <Typography variant="h6" className="text-gray-800">
+                  Email Notifications
+                </Typography>
+                <Typography variant="body2" className="text-gray-600 mt-1">
+                  Receive schedule updates via email
+                </Typography>
+                {proxyState.isAnonymous && proxyState.emailEnabled && (
+                  <Typography variant="body2" className="text-orange-600 mt-1">
+                    <Icons.Info fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Sign in to receive email notifications
+                  </Typography>
+                )}
+              </div>
+              <Switch
+                checked={proxyState.emailEnabled}
+                onChange={handleEmailToggle}
                 color="primary"
               />
             </div>
@@ -578,13 +636,19 @@ const NotificationSettings = () => {
                   />
                 </svg>
                 <Typography variant="h6" className="text-gray-700 mb-2">
-                  Notifications Disabled
+                  Push Notifications Disabled
                 </Typography>
                 <Typography variant="body" className="text-gray-600 mx-auto ">
                   <div className='!max-w-md mx-auto'>
                     Enable push notifications to stay updated about schedule changes in real-time.
                   </div>
                 </Typography>
+
+                {proxyState.emailEnabled && (
+                  <Typography variant="body2" className="text-blue-600 mt-4">
+                    Email notifications are enabled. You'll receive updates via email.
+                  </Typography>
+                )}
               </div>
             </Paper>
           )}

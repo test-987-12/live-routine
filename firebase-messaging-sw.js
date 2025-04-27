@@ -2,13 +2,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCWzeya7dZmsE7XkQvOECKEXXarsMKgmH4",
-    authDomain: "test-firebase-987-12.firebaseapp.com",
-    projectId: "test-firebase-987-12",
-    storageBucket: "test-firebase-987-12.firebasestorage.app",
-    messagingSenderId: "103938328487",
-    appId: "1:103938328487:web:4981246a266858253d1882",
-    measurementId: "G-7DM0BMGDZD"
+    apiKey: "AIzaSyBGAXFpKqqToJ6QFGodhzlQKt1WneQN19s",
+    authDomain: "nub-live.firebaseapp.com",
+    projectId: "nub-live",
+    storageBucket: "nub-live.firebasestorage.app",
+    messagingSenderId: "800603073230",
+    appId: "1:800603073230:web:9971104fe7992012b5fe9f",
+    measurementId: "G-VV61301VDD"
 };
 
 firebase.initializeApp(firebaseConfig);

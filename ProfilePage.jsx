@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProxy } from 'valtio/utils';
-import { Typography, Paper, Box, Avatar, Divider, Button } from '@mui/material';
+import { Typography, Paper, Box, Avatar, Divider } from '@mui/material';
 import * as Icons from '@mui/icons-material';
 
 // We'll need to reference the AuthPage component
@@ -9,26 +9,25 @@ const AuthPage = window.AuthPage;
 const ProfilePage = () => {
   const proxyState = useProxy(window.state);
 
-  // If user is not logged in, show a message
+  // Use effect to sign in anonymously if not logged in
+  React.useEffect(() => {
+    if (!proxyState.user) {
+      console.log("ProfilePage: User not logged in, signing in anonymously");
+      window.signInAnonymously();
+    }
+  }, [proxyState.user]);
+
+  // Show loading while signing in anonymously
   if (!proxyState.user) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <Paper elevation={3} className="p-6 max-w-md">
-          <Typography variant="h5" className="text-center mb-4">
-            Please Sign In
-          </Typography>
-          <Typography variant="body1" className="text-center mb-4">
-            You need to be signed in to view your profile.
-          </Typography>
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={() => window.location.hash = '#/auth'}
-            startIcon={<Icons.Login />}
-          >
-            Sign In
-          </Button>
-        </Paper>
+        <div
+          className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full"
+          role="status"
+          aria-label="loading"
+        >
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -36,6 +35,13 @@ const ProfilePage = () => {
   return (
     <div className="w-full grow flex flex-col bg-white p-6 max-w-6xl mx-auto rounded-lg">
       <Paper elevation={2} className="p-6">
+        {proxyState.isAnonymous && (
+          <Box className="mb-4 p-2 bg-blue-50 rounded-md">
+            <Typography variant="body2" color="primary">
+              You are currently using the app anonymously. <a href="#/auth" className="text-blue-600 underline">Sign in</a> to save your preferences.
+            </Typography>
+          </Box>
+        )}
         <Box className="flex flex-col items-center mb-6">
           <Avatar
             src={proxyState.user.photoURL} // Use photoURL if available

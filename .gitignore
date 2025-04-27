@@ -4,3 +4,4 @@ package.json
 test.js
 .vite
 .firebase
+service-account.json

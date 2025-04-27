@@ -9,16 +9,15 @@ import { useProxy } from 'valtio/utils';
 // This might be done in index.html or another central place
 // Initialize Firebase with project configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyCWzeya7dZmsE7XkQvOECKEXXarsMKgmH4",
-    authDomain: "test-firebase-987-12.firebaseapp.com",
-    projectId: "test-firebase-987-12",
-    storageBucket: "test-firebase-987-12.firebasestorage.app",
-    messagingSenderId: "103938328487",
-    appId: "1:103938328487:web:4981246a266858253d1882",
-    measurementId: "G-7DM0BMGDZD"
+    apiKey: "AIzaSyBGAXFpKqqToJ6QFGodhzlQKt1WneQN19s",
+    authDomain: "nub-live.firebaseapp.com",
+    projectId: "nub-live",
+    storageBucket: "nub-live.firebasestorage.app",
+    messagingSenderId: "800603073230",
+    appId: "1:800603073230:web:9971104fe7992012b5fe9f",
+    measurementId: "G-VV61301VDD"
 };
 
-const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 function AuthPage() {
@@ -42,16 +41,21 @@ function AuthPage() {
 
     // Check if user is already logged in and redirect if needed
     useEffect(() => {
-        // If user is logged in and email is verified (or using a different auth method)
-        if (proxyState.user && (proxyState.emailVerified || proxyState.user.providerData[0].providerId !== 'password')) {
+        // If user is logged in (not anonymously) and email is verified (or using a different auth method)
+        if (proxyState.user && !proxyState.isAnonymous &&
+            (proxyState.emailVerified || proxyState.user.providerData[0]?.providerId !== 'password')) {
             console.log("User already logged in, redirecting to home page");
             setRedirecting(true);
             // Use a short timeout to prevent any UI flicker
             setTimeout(() => {
                 window.location.hash = "#/";
             }, 10);
+        } else if (proxyState.user && proxyState.isAnonymous) {
+            // If user is anonymous, sign them out so they can sign in properly
+            console.log("User is anonymous, signing out to allow proper sign in");
+            signOut(auth);
         }
-    }, [proxyState.user, proxyState.emailVerified]);
+    }, [proxyState.user, proxyState.emailVerified, proxyState.isAnonymous]);
 
     // We'll use URL parameters to determine if we're in verification mode
     useEffect(() => {
@@ -392,7 +396,7 @@ function AuthPage() {
                     )}
 
                     {/* Tabs for different auth methods */}
-                    <Box sx={{ width: '100%', mt: 2, borderBottom: 1, borderColor: 'divider' }}>
+                    {/* <Box sx={{ width: '100%', mt: 2, borderBottom: 1, borderColor: 'divider' }}>
                         <Tabs
                             value={activeTab}
                             onChange={handleTabChange}
@@ -405,100 +409,61 @@ function AuthPage() {
                             <Tab icon={<Icons.Login />} label="Social" iconPosition="start" />
                             <Tab icon={<Icons.Phone />} label="Phone" iconPosition="start" />
                         </Tabs>
-                    </Box>
+                    </Box> */}
 
                     {/* Tab Content */}
                     <Box sx={{ width: '100%', mt: 2, minHeight: '240px' }}>
                         {/* Email/Password Form */}
-                        {activeTab === 0 && (
-                            <Box component="form" noValidate sx={{ width: '100%' }}>
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="email"
-                                    label="Email Address"
-                                    name="email"
-                                    autoComplete="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    disabled={!!loading}
-                                />
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    name="password"
-                                    label="Password"
-                                    type="password"
-                                    id="password"
-                                    autoComplete="current-password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    disabled={!!loading}
-                                />
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, mb: 2 }}>
-                                    <Button
-                                        type="button"
-                                        variant="contained"
-                                        onClick={() => handleAuthAction('emailSignIn')}
-                                        disabled={!!loading || !email || !password}
-                                        sx={{ flexGrow: 1, mr: 1 }}
-                                    >
-                                        {loading === 'emailSignIn' ? <CircularProgress size={24} /> : 'Sign In'}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outlined"
-                                        onClick={() => handleAuthAction('emailSignUp')}
-                                        disabled={!!loading || !email || !password}
-                                        sx={{ flexGrow: 1, ml: 1 }}
-                                    >
-                                        {loading === 'emailSignUp' ? <CircularProgress size={24} /> : 'Sign Up'}
-                                    </Button>
-                                </Box>
-                            </Box>
-                        )}
-
-                        {/* Social Login Options */}
-                        {activeTab === 1 && (
-                            <Box sx={{ width: '100%', mt: 2 }}>
-                                <Typography variant="body2" align="center" sx={{ mb: 2 }}>
-                                    Choose a social login method
-                                </Typography>
+                        <Box component="form" noValidate sx={{ width: '100%' }}>
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="email"
+                                label="Email Address"
+                                name="email"
+                                autoComplete="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={!!loading}
+                            />
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                name="password"
+                                label="Password"
+                                type="password"
+                                id="password"
+                                autoComplete="current-password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={!!loading}
+                            />
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, mb: 2 }}>
                                 <Button
                                     type="button"
-                                    fullWidth
-                                    variant="outlined"
-                                    startIcon={<Icons.Google />}
-                                    onClick={() => handleAuthAction('googleSignIn')}
-                                    disabled={!!loading}
-                                    sx={{ mb: 2 }}
+                                    variant="contained"
+                                    onClick={() => handleAuthAction('emailSignIn')}
+                                    disabled={!!loading || !email || !password}
+                                    sx={{ flexGrow: 1, mr: 1 }}
                                 >
-                                    {loading === 'googleSignIn' ? <CircularProgress size={24} /> : 'Sign in with Google'}
+                                    {loading === 'emailSignIn' ? <CircularProgress size={24} /> : 'Sign In'}
                                 </Button>
                                 <Button
                                     type="button"
-                                    fullWidth
                                     variant="outlined"
-                                    startIcon={<Icons.Facebook />}
-                                    onClick={() => handleAuthAction('facebookSignIn')}
-                                    disabled={!!loading}
-                                    sx={{
-                                        backgroundColor: loading === 'facebookSignIn' ? 'inherit' : '#1877F2',
-                                        color: loading === 'facebookSignIn' ? 'inherit' : 'white',
-                                        '&:hover': {
-                                            backgroundColor: loading === 'facebookSignIn' ? 'inherit' : '#0d6efd'
-                                        }
-                                    }}
+                                    onClick={() => handleAuthAction('emailSignUp')}
+                                    disabled={!!loading || !email || !password}
+                                    sx={{ flexGrow: 1, ml: 1 }}
                                 >
-                                    {loading === 'facebookSignIn' ? <CircularProgress size={24} /> : 'Sign in with Facebook'}
+                                    {loading === 'emailSignUp' ? <CircularProgress size={24} /> : 'Sign Up'}
                                 </Button>
                             </Box>
-                        )}
+                        </Box>
 
                         {/* Phone Number Sign-In */}
-                        {activeTab === 2 && (
+                        {false && (
                             <Box sx={{ width: '100%', mt: 2 }}>
                                 {!showOtpInput ? (
                                     <>
@@ -599,6 +564,23 @@ function AuthPage() {
                         sx={{ mb: 2 }}
                     >
                         Continue as Guest
+                    </Button>
+                    <Button
+                        type="button"
+                        fullWidth
+                        variant="outlined"
+                        startIcon={<Icons.Google />}
+                        onClick={() => handleAuthAction('googleSignIn')}
+                        disabled={!!loading}
+                        sx={{
+                            backgroundColor: loading === 'googleSignIn' ? 'inherit' : '#1877F2',
+                            color: loading === 'googleSignIn' ? 'inherit' : 'white',
+                            '&:hover': {
+                                backgroundColor: loading === 'googleSignIn' ? 'inherit' : '#0d6efd'
+                            }
+                        }}
+                    >
+                        {loading === 'googleSignIn' ? <CircularProgress size={24} /> : 'Sign in with Google'}
                     </Button>
                 </Paper>
             </Container>

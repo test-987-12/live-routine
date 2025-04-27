@@ -91,19 +91,26 @@
     import { getFirestore } from 'firebase/firestore';
     import { getMessaging, getToken, onMessage } from "firebase/messaging";
     import { getStorage } from 'firebase/storage';
-    import { onAuthStateChanged, signOut } from 'firebase/auth'; // Import auth state listener and sign out
+    import { onAuthStateChanged, signOut, signInAnonymously } from 'firebase/auth'; // Import auth state listener, sign out, and anonymous sign in
     import * as Icons from '@mui/icons-material';
 
 
     let serviceAccountFirebase = {
-      apiKey: "AIzaSyCWzeya7dZmsE7XkQvOECKEXXarsMKgmH4",
-      authDomain: "test-firebase-987-12.firebaseapp.com",
-      projectId: "test-firebase-987-12",
-      storageBucket: "test-firebase-987-12.firebasestorage.app",
-      messagingSenderId: "103938328487",
-      appId: "1:103938328487:web:4981246a266858253d1882",
-      measurementId: "G-7DM0BMGDZD"
+      apiKey: "AIzaSyBGAXFpKqqToJ6QFGodhzlQKt1WneQN19s",
+      authDomain: "nub-live.firebaseapp.com",
+      projectId: "nub-live",
+      storageBucket: "nub-live.firebasestorage.app",
+      messagingSenderId: "800603073230",
+      appId: "1:800603073230:web:9971104fe7992012b5fe9f",
+      measurementId: "G-VV61301VDD"
     };
+
+    const app = initializeApp(serviceAccountFirebase);
+    window.app = app;
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const messaging = getMessaging(app);
 
 
     window.state = proxy({});
@@ -126,11 +133,19 @@
     window.fetchRoutine();
 
     // Initialize Firebase App and Auth
-    const app = initializeApp(serviceAccountFirebase);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-    const messaging = getMessaging(app);
+    // Function to sign in anonymously
+    window.signInAnonymously = async () => {
+      try {
+        // Only sign in if there's no current user
+        if (!auth.currentUser) {
+          console.log("Signing in anonymously...");
+          await signInAnonymously(auth);
+          console.log("Anonymous sign-in successful");
+        }
+      } catch (error) {
+        console.error("Error signing in anonymously:", error);
+      }
+    };
 
 
     const { default: HomePage } = await utils.dynamicImport('HomePage.jsx');
@@ -141,23 +156,26 @@
 
     // Auth state listener
     onAuthStateChanged(auth, (user) => {
-
       // Check if user is signed in and using email/password but not verified
-      if (user && user.providerData[0].providerId === 'password' && !user.emailVerified) {
+      if (user && user.providerData[0]?.providerId === 'password' && !user.emailVerified) {
         console.log("User signed in with unverified email");
         // We'll still set the user in state, but the app will show verification required message
         state.user = ref(user);
         state.emailVerified = false;
+        state.isAnonymous = false;
       } else if (user) {
         // User is either verified or using a different auth method
         state.user = ref(user);
         state.emailVerified = true;
 
-        // User is verified or using a different auth method
+        // Check if the user is anonymous
+        state.isAnonymous = user.isAnonymous;
+        console.log("User is anonymous:", user.isAnonymous);
       } else {
         // No user is signed in
         state.user = null;
         state.emailVerified = false;
+        state.isAnonymous = false;
       }
       console.log("Auth state changed, user:", user);
       render(); // Re-render the app on auth state change
@@ -253,7 +271,7 @@
                     </Typography>
 
                     {/* User Icon Button */}
-                    {proxyState.user ? (
+                    {proxyState.user && !proxyState.isAnonymous ? (
                       <IconButton
                         id="basic-button" // Used for aria-controls and aria-labelledby
                         onClick={handleUserMenuClick}
@@ -307,7 +325,7 @@
                       }}
                     >
                       {/* Keep MenuItems the same, but wrap actions in handleUserMenuClose */}
-                      {proxyState.user ? [
+                      {proxyState.user && !proxyState.isAnonymous ? [
                         <MenuItem key="user-info" disabled sx={{ opacity: '1 !important' }}>
                           <Box>
                             <Typography variant="body2" noWrap sx={{ maxWidth: 160, fontWeight: 500 }}>
@@ -406,9 +424,7 @@
             >
               <BottomNavigationAction component={Link} to="/" label="Home" icon={<Icons.Home />} />
               <BottomNavigationAction component={Link} to="/notifications" label="Notifications" icon={<Icons.Notifications />} />
-              {proxyState.user && (
-                <BottomNavigationAction component={Link} to="/profile" label="Profile" icon={<Icons.AccountCircle />} />
-              )}
+              <BottomNavigationAction component={Link} to="/profile" label="Profile" icon={<Icons.AccountCircle />} />
             </BottomNavigation>
           </>
         );

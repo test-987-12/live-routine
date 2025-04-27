@@ -340,7 +340,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
         const fetchInfo = async () => {
             try {
                 setInfo(
-                    JSON.parse(await (await fetch('https://test-firebase-987-12-default-rtdb.asia-southeast1.firebasedatabase.app/online_courses.json')).text()).courses.join(', ')
+                    JSON.parse(await (await fetch('https://nub-live-default-rtdb.asia-southeast1.firebasedatabase.app/online_courses.json')).text()).courses.join(', ')
                 );
             } catch (error) {
                 console.error("Failed to fetch info data:", error);
