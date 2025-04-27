@@ -662,7 +662,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                                                             </div>
                                                         ) : (
                                                             <div className="h-16 flex items-center justify-center text-gray-400 text-md">
-                                                                ...
+                                                                • • •
                                                             </div>
                                                         )}
                                                     </td>
