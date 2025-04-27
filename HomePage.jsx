@@ -607,8 +607,8 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
             >
-                <div className="table-container relative">
-                    <div className="schedule-table shadow rounded-xl absolute top-0 left-0 overflow-hidden">
+                <div className="table-container relative rounded-xl ">
+                    <div className="schedule-table shadow absolute top-0 left-0 overflow-hidden">
                         <div className="border border-gray-400 rounded-xl overflow-hidden">
                             <table className="table divide-y divide-gray-300 text-center border-blue-500"
                                 ref={(ref) => { }}
