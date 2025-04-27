@@ -613,7 +613,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                             <table className="table divide-y divide-gray-300 text-center border-blue-500"
                                 ref={(ref) => { }}
                             >
-                                <thead className="bg-gradient-to-r from-blue-200 to-blue-300 text-white">
+                                <thead className="bg-gradient-to-r from-blue-500 to-blue-500 text-white">
                                     <tr>
                                         <th className="px-1 py-4 text-md font-semibold uppercase tracking-wider border-b border-r border-gray-300 min-w-[150px]">
                                             Day / Time
