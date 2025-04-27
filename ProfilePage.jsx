@@ -34,14 +34,14 @@ const ProfilePage = () => {
 
   return (
     <div className="w-full grow flex flex-col bg-white p-6 max-w-6xl mx-auto rounded-lg">
+      {proxyState.isAnonymous && (
+        <Box className="mb-4 p-2 bg-blue-50 rounded-md">
+          <Typography variant="body2" color="primary">
+            You are currently using the app anonymously. <a href="#/auth" className="text-blue-600 underline">Sign in</a> to save your preferences.
+          </Typography>
+        </Box>
+      )}
       <Paper elevation={2} className="p-6">
-        {proxyState.isAnonymous && (
-          <Box className="mb-4 p-2 bg-blue-50 rounded-md">
-            <Typography variant="body2" color="primary">
-              You are currently using the app anonymously. <a href="#/auth" className="text-blue-600 underline">Sign in</a> to save your preferences.
-            </Typography>
-          </Box>
-        )}
         <Box className="flex flex-col items-center mb-6">
           <Avatar
             src={proxyState.user.photoURL} // Use photoURL if available
@@ -61,7 +61,7 @@ const ProfilePage = () => {
           </Typography>
         </Box>
 
-        <Divider className="my-4" />
+        <Divider className="!my-4" />
 
         <Box className="space-y-4">
           {/* User ID */}

@@ -10,6 +10,7 @@ import {
     Select,
     Autocomplete,
     FormControl,
+    NativeSelect,
     InputLabel,
 } from '@mui/material';
 
@@ -321,8 +322,31 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
     };
     async function handleDownload(e) {
         e?.preventDefault();
-        htmlToImage.toPng(document.querySelector('table'), { width: document.querySelector('table').offsetWidth + 50, height: document.querySelector('table').offsetHeight + 50 })
+        let ssTable = document.querySelector('.schedule-table').cloneNode(true);
+        document.body.appendChild(ssTable);
+        // white bg to cover table
+        let cover = document.createElement('div');
+        cover.style.position = 'fixed';
+        cover.style.top = '0';
+        cover.style.left = '0';
+        cover.style.width = '100vw';
+        cover.style.height = '100vh';
+        cover.style.background = 'white';
+        cover.style.zIndex = '-9999998';
+        // document.body.appendChild(cover);
+        // make invisible
+        ssTable.style.position = 'fixed';
+        ssTable.style.zIndex = '-9999999';
+        ssTable.style.top = '9999';
+
+        let desiredRes = {
+            width: 1920,
+            height: 1080
+        }
+        ssTable.style.transform = `scale(${desiredRes.width / ssTable.getBoundingClientRect().width})`;
+        htmlToImage.toPng(ssTable, { width: ssTable.getBoundingClientRect().width, height: ssTable.getBoundingClientRect().height })
             .then(function (dataUrl) {
+                ssTable.remove();
                 var img = new Image();
                 img.src = dataUrl;
                 let a = document.createElement('a');
@@ -518,11 +542,17 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                     <>
                         <FormControl sx={{ width: '100%' }}>
                             <InputLabel id="section-select-label">Section</InputLabel>
-                            <Select label="Section"
+                            <Select
                                 labelId="section-select-label"
+                                id="section-select"
+                                label="Section"
+                                displayEmpty
                                 value={proxyState.selectedSection || ''}
                                 onChange={(e) => { proxyState.selectedSection = e.target.value; proxyState.selectedTeacher = '' }}
                             >
+                                <MenuItem value="">
+                                    <em>None</em>
+                                </MenuItem>
                                 {([...new Set(extractRoutine(proxyState.sheetData?.values || []).map(item => item.section))]).sort((a, b) => {
                                     let numberA = a.match(/\d+/)?.[0] || 0;
                                     let characterA = a.match(/[a-zA-Z]+/)?.[0] || '';
@@ -541,12 +571,25 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                         </FormControl>
                         <FormControl sx={{ width: '100%' }}>
                             <InputLabel id="teacher-select-label">Teacher</InputLabel>
-                            <Select label="Teacher"
+                            <Select
                                 labelId="teacher-select-label"
+                                id="teacher-select"
+                                label="Teacher"
+                                displayEmpty
                                 value={proxyState.selectedTeacher || ''}
                                 onChange={(e) => { proxyState.selectedTeacher = e.target.value; proxyState.selectedSection = '' }}
                             >
-                                {([...new Set(extractRoutine(proxyState.sheetData?.values || []).map(item => item.teacher))]).sort()
+                                {([...new Set(extractRoutine(proxyState.sheetData?.values || []).map(item => item.teacher))]).sort((a, b) => {
+                                    let numberA = a.match(/\d+/)?.[0] || 0;
+                                    let characterA = a.match(/[a-zA-Z]+/)?.[0] || '';
+                                    let numberB = b.match(/\d+/)?.[0] || 0;
+                                    let characterB = b.match(/[a-zA-Z]+/)?.[0] || '';
+
+                                    if (numberA !== numberB) {
+                                        return numberA - numberB;
+                                    }
+                                    return characterA.localeCompare(characterB);
+                                })
                                     .map((teacher, index) => (
                                         <MenuItem key={index} value={teacher}>{teacher}</MenuItem>
                                     ))}
@@ -570,15 +613,15 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                             <table className="table divide-y divide-gray-300 text-center border-blue-500"
                                 ref={(ref) => { }}
                             >
-                                <thead className="bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700">
+                                <thead className="bg-gradient-to-r from-blue-500 via-blue-500 to-blue-500 text-white">
                                     <tr>
-                                        <th className="px-1 py-4 text-md font-semibold uppercase tracking-wider border-b border-r border-gray-300 min-w-[150px]">
+                                        <th className="px-3 py-4 text-md font-semibold uppercase tracking-wider border-r border-blue-400 min-w-[150px]">
                                             Day / Time
                                         </th>
                                         {TIME_SLOTS.map((time, index) => (
                                             <th
                                                 key={index}
-                                                className="px-1 py-4 text-sm font-semibold uppercase tracking-wider border-b border-r border-gray-300 min-w-[200px]"
+                                                className="px-3 py-4 text-sm font-semibold uppercase tracking-wider border-r border-blue-400 min-w-[200px]"
                                             >
                                                 {time}
                                             </th>
@@ -600,11 +643,11 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                                                     >
                                                         {scheduleItem ? (
                                                             <div className="flex flex-col items-center justify-center">
-                                                                <div className="text-lg font-bold text-gray-700 text-center">
+                                                                <div className="text-lg font-bold text-blue-700 text-center">
                                                                     {scheduleItem.course.replaceAll(/[\s-]/g, '')}
                                                                 </div>
-                                                                <div className="flex flex-col text-xs text-gray-500 font-medium text-center w-full max-w-[200px] text-ellipsis overflow-hidden break-words whitespace-normal">
-                                                                    <div className="line-clamp-2">
+                                                                <div className="flex flex-col text-sm text-gray-500 font-medium text-center w-full max-w-[200px] text-ellipsis overflow-hidden break-words whitespace-normal">
+                                                                    <div className="line-clamp-2 leading-tight">
                                                                         {courseMap[scheduleItem.course.replaceAll(/[\s-]/g, '')] || ''}
                                                                     </div>
                                                                 </div>

@@ -373,7 +373,17 @@ const NotificationSettings = () => {
   // Extract unique values from routine data
   const getUniqueOptions = (field) => {
     const routineData = extractRoutine(proxyState.sheetData?.values || []);
-    return [...new Set(routineData.map(item => item[field]))].sort();
+    return [...new Set(routineData.map(item => item[field]))].sort((a, b) => {
+      let numberA = a.match(/\d+/)?.[0] || 0;
+      let characterA = a.match(/[a-zA-Z]+/)?.[0] || '';
+      let numberB = b.match(/\d+/)?.[0] || 0;
+      let characterB = b.match(/[a-zA-Z]+/)?.[0] || '';
+
+      if (numberA !== numberB) {
+        return numberA - numberB;
+      }
+      return characterA.localeCompare(characterB);
+    });
   };
 
   // Tag selection change handler
@@ -406,7 +416,7 @@ const NotificationSettings = () => {
     );
   }
 
-  const noTagsSelected = proxyState.pushEnabled &&
+  const noTagsSelected = (proxyState.pushEnabled || proxyState.emailEnabled) &&
     proxyState.sectionTags?.length === 0 &&
     proxyState.courseTags?.length === 0 &&
     proxyState.teacherTags?.length === 0;
@@ -434,7 +444,7 @@ const NotificationSettings = () => {
                   Push Notifications
                 </Typography>
                 <Typography variant="body2" className="text-gray-600 mt-1">
-                  Receive alerts about schedule changes in real-time
+                  Receive alerts through browser even in background
                 </Typography>
               </div>
               <Switch
@@ -495,6 +505,7 @@ const NotificationSettings = () => {
               Without selecting any filters below, you will receive notifications for all changes.
             </Alert>
           )}
+
 
           {(proxyState.pushEnabled || proxyState.emailEnabled) ? (
             <>

@@ -5,8 +5,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>React</title>
+  <link href='https://fonts.googleapis.com/css?family=Space Mono' rel='stylesheet'>
+  <link href='https://fonts.googleapis.com/css?family=Space Grotesk' rel='stylesheet'>
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-
+  <style>
+    html,
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
   <script type="importmap">
     {
       "imports": {
@@ -22,6 +31,8 @@
         "@emotion/styled": "https://esm.sh/@emotion/styled@11.11.0?dev&external=react,react-dom,react-dom/client",
         "@mui/material": "https://esm.sh/@mui/material@5.14.12?dev&external=react,react-dom,react-dom/client",
         "@mui/icons-material": "https://esm.sh/@mui/icons-material@5.14.12?dev&external=react,react-dom,react-dom/client",
+        "@material-ui/styles": "https://esm.sh/@material-ui/styles?dev&external=react,react-dom,react-dom/client",
+        "@material-ui/core/styles": "https://esm.sh/@material-ui/core/styles?dev&external=react,react-dom,react-dom/client",
         "firebase/app": "https://esm.sh/firebase/app?dev",
         "firebase/auth": "https://esm.sh/firebase/auth?dev",
         "firebase/firestore": "https://esm.sh/firebase/firestore?dev",
@@ -82,10 +93,10 @@
   <script data-type="module" type="text/babel">
     import React from 'react';
     import { createRoot } from 'react-dom/client';
-    import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
+    import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
     import { proxy, ref } from 'valtio';
     import { useProxy } from 'valtio/utils';
-    import { Button, ThemeProvider, createTheme, Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, BottomNavigation, BottomNavigationAction, Menu, MenuItem, Avatar, Divider, Paper, Popover } from '@mui/material';
+    import { Button, ThemeProvider as MuiThemeProvider, createTheme, Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, BottomNavigation, BottomNavigationAction, Menu, MenuItem, Avatar, Divider, Paper, Popover } from '@mui/material';
     import { initializeApp } from 'firebase/app';
     import { getAuth } from 'firebase/auth';
     import { getFirestore } from 'firebase/firestore';
@@ -260,6 +271,10 @@
 
       // Layout component for pages that should have the app shell (sidebar, topbar, etc.)
       const AppLayout = () => {
+        // Use the useLocation hook to get the current pathname
+        const location = useLocation();
+        const currentPath = location.pathname;
+
         return (
           <>
             <div className="z-10 !shadow-[0_2px_4px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-4xl md:max-w-full mx-auto sticky top-0" >
@@ -368,7 +383,7 @@
                 </AppBar>
               )}
             </div>
-            <div className={`w-full grow flex flex-col overflow-auto relative `}>
+            <div className={`w-full grow flex flex-col overflow-y-scroll relative `}>
               <div className={`w-full grow flex flex-col max-w-4xl mx-auto `}>
                 {/* App Bar */}
 
@@ -376,9 +391,30 @@
                   {/* Desktop Left Sidenav */}
                   <div className='hidden md:block  w-64 shrink-0'>
                     <div className='hidden md:block shrink-0 border-r border-gray-200 fixed w-64 h-full'>
-                      <List>
+                      <List sx={{ padding: '8px' }}>
                         <ListItem disablePadding>
-                          <ListItemButton component={Link} to="/">
+                          <ListItemButton
+                            component={Link}
+                            to="/"
+                            sx={{
+                              position: 'relative',
+                              borderRadius: '8px',
+                              backgroundColor: currentPath === '/' ? 'rgba(229, 231, 235, 1)' : 'transparent',
+                              '&:hover': {
+                                backgroundColor: currentPath === '/' ? 'rgba(229, 231, 235, 1)' : 'rgba(229, 231, 235, 0.5)'
+                              },
+                              '&::before': currentPath === '/' ? {
+                                content: '""',
+                                position: 'absolute',
+                                left: 0,
+                                top: '10%',
+                                height: '80%',
+                                width: '4px',
+                                backgroundColor: '#2563eb', // blue-600
+                                borderRadius: '0 2px 2px 0'
+                              } : {}
+                            }}
+                          >
                             <ListItemIcon>
                               <Icons.Home />
                             </ListItemIcon>
@@ -386,7 +422,28 @@
                           </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
-                          <ListItemButton component={Link} to="/notifications">
+                          <ListItemButton
+                            component={Link}
+                            to="/notifications"
+                            sx={{
+                              position: 'relative',
+                              borderRadius: '8px',
+                              backgroundColor: currentPath === '/notifications' ? 'rgba(229, 231, 235, 1)' : 'transparent',
+                              '&:hover': {
+                                backgroundColor: currentPath === '/notifications' ? 'rgba(229, 231, 235, 1)' : 'rgba(229, 231, 235, 0.5)'
+                              },
+                              '&::before': currentPath === '/notifications' ? {
+                                content: '""',
+                                position: 'absolute',
+                                left: 0,
+                                top: '10%',
+                                height: '80%',
+                                width: '4px',
+                                backgroundColor: '#2563eb', // blue-600
+                                borderRadius: '0 2px 2px 0'
+                              } : {}
+                            }}
+                          >
                             <ListItemIcon>
                               <Icons.Notifications />
                             </ListItemIcon>
@@ -394,7 +451,28 @@
                           </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
-                          <ListItemButton component={Link} to="/profile">
+                          <ListItemButton
+                            component={Link}
+                            to="/profile"
+                            sx={{
+                              position: 'relative',
+                              borderRadius: '8px',
+                              backgroundColor: currentPath === '/profile' ? 'rgba(229, 231, 235, 1)' : 'transparent',
+                              '&:hover': {
+                                backgroundColor: currentPath === '/profile' ? 'rgba(229, 231, 235, 1)' : 'rgba(229, 231, 235, 0.5)'
+                              },
+                              '&::before': currentPath === '/profile' ? {
+                                content: '""',
+                                position: 'absolute',
+                                left: 0,
+                                top: '10%',
+                                height: '80%',
+                                width: '4px',
+                                backgroundColor: '#2563eb', // blue-600
+                                borderRadius: '0 2px 2px 0'
+                              } : {}
+                            }}
+                          >
                             <ListItemIcon>
                               <Icons.AccountCircle />
                             </ListItemIcon>
@@ -421,10 +499,50 @@
             <BottomNavigation
               className="z-10 sticky bottom-0 !shrink-0 !shadow-[0_-2px_4px_rgba(0,0,0,0.1)] md:!hidden"
               showLabels
+              value={currentPath}
             >
-              <BottomNavigationAction component={Link} to="/" label="Home" icon={<Icons.Home />} />
-              <BottomNavigationAction component={Link} to="/notifications" label="Notifications" icon={<Icons.Notifications />} />
-              <BottomNavigationAction component={Link} to="/profile" label="Profile" icon={<Icons.AccountCircle />} />
+              <BottomNavigationAction
+                component={Link}
+                to="/"
+                value="/"
+                label="Home"
+                icon={<Icons.Home />}
+                sx={{
+                  '&.Mui-selected': {
+                    color: '#2563eb',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(229, 231, 235, 0.5)'
+                  }
+                }}
+              />
+              <BottomNavigationAction
+                component={Link}
+                to="/notifications"
+                value="/notifications"
+                label="Notifications"
+                icon={<Icons.Notifications />}
+                sx={{
+                  '&.Mui-selected': {
+                    color: '#2563eb',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(229, 231, 235, 0.5)'
+                  }
+                }}
+              />
+              <BottomNavigationAction
+                component={Link}
+                to="/profile"
+                value="/profile"
+                label="Profile"
+                icon={<Icons.AccountCircle />}
+                sx={{
+                  '&.Mui-selected': {
+                    color: '#2563eb',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(229, 231, 235, 0.5)'
+                  }
+                }}
+              />
             </BottomNavigation>
           </>
         );
@@ -462,15 +580,27 @@
         ) : this.props.children;
       }
     }
-
-
+    const THEME = createTheme({
+      typography: {
+        "fontFamily": `"Space Grotesk", "Helvetica", "Arial", sans-serif`,
+        "fontSize": 14,
+        "fontWeightLight": 300,
+        "fontWeightRegular": 400,
+        "fontWeightMedium": 500
+      }
+    });
 
     window.render = function render() {
       if (!window.rootEl) window.rootEl = createRoot(document.getElementById('root'));
       window.rootEl.render(
-        window.location.protocol == 'http:' && <ErrorBoundary>
-          <App />
-        </ErrorBoundary> || <App />
+
+        <div className="bg-white text-black">
+          <MuiThemeProvider theme={THEME}>
+            {window.location.protocol == 'http:' && <ErrorBoundary>
+              <App />
+            </ErrorBoundary> || <App />}
+          </MuiThemeProvider>
+        </div>
       );
     }
 
