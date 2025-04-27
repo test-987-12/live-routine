@@ -323,6 +323,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
     async function handleDownload(e) {
         e?.preventDefault();
         let ssTable = document.querySelector('.schedule-table').cloneNode(true);
+        ssTable.classList.remove('rounded-xl');
         document.body.appendChild(ssTable);
         // white bg to cover table
         let cover = document.createElement('div');
