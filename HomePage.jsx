@@ -553,11 +553,8 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                                 label="Section"
                                 displayEmpty
                                 value={proxyState.selectedSection || ''}
-                                onChange={(e) => { proxyState.selectedSection = e.target.value; proxyState.selectedTeacher = '' }}
+                                onChange={(e) => { proxyState.selectedSection = e.target.value; proxyState.selectedTeacher = ''; if (proxyState.selectedSection == '' && proxyState.selectedTeacher == '') proxyState.selectedSection = '8A' }}
                             >
-                                <MenuItem value="">
-                                    <em>None</em>
-                                </MenuItem>
                                 {([...new Set(extractRoutine(proxyState.sheetData?.values || []).map(item => item.section))]).sort((a, b) => {
                                     let numberA = a.match(/\d+/)?.[0] || 0;
                                     let characterA = a.match(/[a-zA-Z]+/)?.[0] || '';
@@ -582,7 +579,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                                 label="Teacher"
                                 displayEmpty
                                 value={proxyState.selectedTeacher || ''}
-                                onChange={(e) => { proxyState.selectedTeacher = e.target.value; proxyState.selectedSection = '' }}
+                                onChange={(e) => { proxyState.selectedTeacher = e.target.value; proxyState.selectedSection = ''; if (proxyState.selectedSection == '' && proxyState.selectedTeacher == '') proxyState.selectedSection = '8A' }}
                             >
                                 {([...new Set(extractRoutine(proxyState.sheetData?.values || []).map(item => item.teacher))]).sort((a, b) => {
                                     let numberA = a.match(/\d+/)?.[0] || 0;
