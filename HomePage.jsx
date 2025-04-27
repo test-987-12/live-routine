@@ -613,15 +613,15 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                             <table className="table divide-y divide-gray-300 text-center border-blue-500"
                                 ref={(ref) => { }}
                             >
-                                <thead className="bg-gradient-to-r from-blue-500 via-blue-500 to-blue-500 text-white">
+                                <thead className="bg-gradient-to-r from-blue-200 to-blue-300 text-white">
                                     <tr>
-                                        <th className="px-3 py-4 text-md font-semibold uppercase tracking-wider border-r border-blue-400 min-w-[150px]">
+                                        <th className="px-1 py-4 text-md font-semibold uppercase tracking-wider border-b border-r border-gray-300 min-w-[150px]">
                                             Day / Time
                                         </th>
                                         {TIME_SLOTS.map((time, index) => (
                                             <th
                                                 key={index}
-                                                className="px-3 py-4 text-sm font-semibold uppercase tracking-wider border-r border-blue-400 min-w-[200px]"
+                                                className="px-1 py-4 text-sm font-semibold uppercase tracking-wider border-b border-r border-gray-300 min-w-[200px]"
                                             >
                                                 {time}
                                             </th>
