@@ -17,6 +17,11 @@ const ProfilePage = () => {
     }
   }, [proxyState.user]);
 
+  // Don't render anything if auth is still loading
+  if (proxyState.authLoading) {
+    return null;
+  }
+
   // Show loading while signing in anonymously
   if (!proxyState.user) {
     return (

@@ -394,6 +394,11 @@ const NotificationSettings = () => {
     subscribeNotifications();
   };
 
+  // Don't render anything if auth is still loading
+  if (proxyState.authLoading) {
+    return null;
+  }
+
   // Check if data is loaded
   const isLoading = proxyState.pushEnabled == null ||
     proxyState.emailEnabled == null ||

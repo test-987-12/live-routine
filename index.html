@@ -124,7 +124,9 @@
     const messaging = getMessaging(app);
 
 
-    window.state = proxy({});
+    window.state = proxy({
+      authLoading: true // Add a flag to track if auth state is still being resolved
+    });
 
     window.fetchRoutine = (async () => {
 
@@ -188,6 +190,10 @@
         state.emailVerified = false;
         state.isAnonymous = false;
       }
+
+      // Set authLoading to false since auth state is now resolved
+      state.authLoading = false;
+
       console.log("Auth state changed, user:", user);
       render(); // Re-render the app on auth state change
     });
@@ -204,6 +210,21 @@
       const [drawerOpen, setDrawerOpen] = React.useState(false);
       const [anchorEl, setAnchorEl] = React.useState(null);
       const open = Boolean(anchorEl);
+
+      // Show loading spinner while auth state is being resolved
+      if (proxyState.authLoading) {
+        return (
+          <div className="w-full h-full flex items-center justify-center">
+            <div
+              className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full"
+              role="status"
+              aria-label="loading"
+            >
+              <span className="sr-only">Loading...</span>
+            </div>
+          </div>
+        );
+      }
 
       const handleUserMenuClick = (event) => {
         console.log(event.currentTarget);
@@ -314,7 +335,6 @@
                       <ListItemIcon className="!text-white">
                         <Icons.Login fontSize="small" />
                       </ListItemIcon>
-                      <span className="!text-white">Sign In</span>
                     </MenuItem>}
 
                     {/* User Menu (Reimplemented with Menu) */}

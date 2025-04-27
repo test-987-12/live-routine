@@ -357,8 +357,8 @@ function AuthPage() {
         }
     };
 
-    // If user is already logged in and being redirected, show nothing to prevent UI flicker
-    if (redirecting) {
+    // If auth is still loading or user is already logged in and being redirected, show nothing to prevent UI flicker
+    if (proxyState.authLoading || redirecting) {
         return null;
     }
 

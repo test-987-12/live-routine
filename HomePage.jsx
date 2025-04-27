@@ -388,7 +388,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
     subscribe(state, () => {
         ; (async () => {
             await utils.frame(() => document.querySelector('table'));
-            // await for visibility 
+            // await for visibility
             await utils.frame(() => document.querySelector('table').offsetHeight);
             adjustScale();
         })()
@@ -721,6 +721,11 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
 
 const Home = () => {
     const proxyState = useProxy(window.state);
+
+    // If auth is still loading, don't render anything
+    if (proxyState.authLoading) {
+        return null;
+    }
 
     return <div className="h-full w-full">
         {proxyState.sheetData && <ScheduleTable routine={proxyState.sheetData} modifiedTime={proxyState.modifiedTime} spreadsheetId={proxyState.spreadsheetId} />
