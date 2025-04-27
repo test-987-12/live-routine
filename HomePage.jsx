@@ -341,10 +341,13 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
         ssTable.style.top = '9999';
 
         let desiredRes = {
-            width: 1920,
-            height: 1080
+            width: 1920 / 2,
+            height: 1080 / 2
         }
-        ssTable.style.transform = `scale(${desiredRes.width / ssTable.getBoundingClientRect().width})`;
+        ssTable.style.transform = `scale(${Math.min(
+            desiredRes.width / ssTable.getBoundingClientRect().width,
+            desiredRes.height / ssTable.getBoundingClientRect().height
+        )})`;
         htmlToImage.toPng(ssTable, { width: ssTable.getBoundingClientRect().width, height: ssTable.getBoundingClientRect().height })
             .then(function (dataUrl) {
                 ssTable.remove();
