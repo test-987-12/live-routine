@@ -496,7 +496,7 @@ const NotificationSettings = () => {
             </Alert>
           )}
 
-          {proxyState.pushEnabled ? (
+          {(proxyState.pushEnabled || proxyState.emailEnabled) ? (
             <>
               <Typography variant="h6" className="text-gray-800 mb-4">
                 Notification Filters
