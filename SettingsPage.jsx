@@ -290,6 +290,7 @@ let loadPrefs = (async () => {
 
 const NotificationSettings = () => {
   const proxyState = useProxy(window.state);
+  const [isLoading, setIsLoading] = useState(true);
   const [inputValues, setInputValues] = useState({
     section: '',
     course: '',
@@ -297,15 +298,19 @@ const NotificationSettings = () => {
   });
 
   useEffect(() => {
-    // Sign in anonymously if not logged in
-    if (!proxyState.user) {
-      console.log("SettingsPage: User not logged in, signing in anonymously");
-      window.signInAnonymously().then(() => {
-        loadPrefs();
-      });
-    } else {
-      loadPrefs();
-    }
+    (async () => {
+      // Sign in anonymously if not logged in
+      if (!proxyState.user) {
+        console.log("SettingsPage: User not logged in, signing in anonymously");
+        window.signInAnonymously().then(async () => {
+          await loadPrefs();
+          setIsLoading(false);
+        });
+      } else {
+        await loadPrefs();
+        setIsLoading(false);
+      }
+    })()
   }, [proxyState.user]);
 
   const subscribeNotifications = async () => {
@@ -399,12 +404,6 @@ const NotificationSettings = () => {
     return null;
   }
 
-  // Check if data is loaded
-  const isLoading = proxyState.pushEnabled == null ||
-    proxyState.emailEnabled == null ||
-    proxyState.sectionTags == null ||
-    proxyState.courseTags == null ||
-    proxyState.teacherTags == null;
 
 
   if (isLoading) {
@@ -629,7 +628,7 @@ const NotificationSettings = () => {
                 </div>
               </div>
 
-              <Divider className="my-6" />
+              <Divider className="!my-4" />
 
               <Typography variant="body2" className="text-gray-500 italic mb-6">
                 Changes to your notification settings are saved automatically.

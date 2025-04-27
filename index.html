@@ -214,15 +214,7 @@
       // Show loading spinner while auth state is being resolved
       if (proxyState.authLoading) {
         return (
-          <div className="w-full h-full flex items-center justify-center">
-            <div
-              className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full"
-              role="status"
-              aria-label="loading"
-            >
-              <span className="sr-only">Loading...</span>
-            </div>
-          </div>
+          null
         );
       }
 
@@ -255,7 +247,8 @@
       // Check if user is logged in with email but not verified
       if (proxyState.user && !proxyState.emailVerified && proxyState.user.providerData[0].providerId === 'password') {
         return (
-          <div className="w-full h-full flex items-center justify-center p-4">
+          <div className="h-screen w-full flex flex-col overflow-auto items-center">
+            <div className="grow"></div>
             <Paper elevation={3} className="p-6 max-w-md">
               <Typography variant="h5" className="text-center mb-4">
                 Email Verification Required
@@ -283,6 +276,7 @@
                 </Button>
               </Box>
             </Paper>
+            <div className="grow"></div>
           </div>
         );
       }
@@ -303,7 +297,7 @@
                 <AppBar position="static" className="bg-blue-600">
                   <Toolbar className="w-full max-w-4xl mx-auto">
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="text-white font-medium">
-                      Automated Class Routine
+                      <span onClick={() => window.location.hash = "#/"} className="cursor-pointer">Automated Class Routine</span>
                     </Typography>
 
                     {/* User Icon Button */}

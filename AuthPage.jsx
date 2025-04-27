@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, signOut, sendEmailVerification } from 'firebase/auth';
-import { Button, TextField, Typography, Container, Box, Paper, Divider, Alert, CircularProgress, Tabs, Tab } from '@mui/material';
+import { Button, TextField, Typography, Container, Box, Paper, Divider, Alert, CircularProgress, Tabs, Tab, IconButton } from '@mui/material';
 import * as Icons from '@mui/icons-material';
 import { initializeApp } from 'firebase/app';
 import { useProxy } from 'valtio/utils';
@@ -21,6 +22,7 @@ const firebaseConfig = {
 const auth = getAuth(app);
 
 function AuthPage() {
+    const navigate = useNavigate();
     // Check if user is already logged in using the global state
     const proxyState = useProxy(window.state);
     const [redirecting, setRedirecting] = useState(false);
@@ -52,8 +54,8 @@ function AuthPage() {
             }, 10);
         } else if (proxyState.user && proxyState.isAnonymous) {
             // If user is anonymous, sign them out so they can sign in properly
-            console.log("User is anonymous, signing out to allow proper sign in");
-            signOut(auth);
+            // console.log("User is anonymous, signing out to allow proper sign in");
+            // signOut(auth);
         }
     }, [proxyState.user, proxyState.emailVerified, proxyState.isAnonymous]);
 
@@ -372,9 +374,17 @@ function AuthPage() {
             <div className="grow"></div>
             <Container component="main" maxWidth="xs" className="flex my-6 items-center justify-center">
                 <Paper elevation={3} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                    <Typography component="h1" variant="h5">
-                        Sign In / Sign Up
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between', width: '100%' }}>
+                        <IconButton onClick={() => navigate('/')} sx={{ mr: 1 }}>
+                            <Icons.ArrowBack />
+                        </IconButton>
+                        <Typography component="h1" variant="h5">
+                            Sign In / Sign Up
+                        </Typography>
+                        <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }} className="!opacity-0">
+                            <Icons.ArrowBack />
+                        </IconButton>
+                    </Box>
                     {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
                     {success && <Alert severity="success" sx={{ width: '100%', mt: 2 }}>{success}</Alert>}
 
@@ -422,6 +432,7 @@ function AuthPage() {
                                 id="email"
                                 label="Email Address"
                                 name="email"
+                                placeholder="john@example.com"    
                                 autoComplete="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -435,6 +446,7 @@ function AuthPage() {
                                 label="Password"
                                 type="password"
                                 id="password"
+                                placeholder="At least 6 characters"
                                 autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

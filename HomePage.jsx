@@ -321,6 +321,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
         return routineDataExtracted.find(item => item.day === day && item.time === time);
     };
     async function handleDownload(e) {
+        utils.notify('Download is starting', 'Please wait...')
         e?.preventDefault();
         let ssTable = document.querySelector('.schedule-table').cloneNode(true);
         ssTable.classList.remove('rounded-xl');
