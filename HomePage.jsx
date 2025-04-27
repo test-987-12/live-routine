@@ -358,10 +358,13 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
             containerRef.current.style.cursor = 'grab';
         }
         setUpTable();
+        adjustScale();
     }, []);
     subscribe(state, () => {
         ; (async () => {
             await utils.frame(() => document.querySelector('table'));
+            // await for visibility 
+            await utils.frame(() => document.querySelector('table').offsetHeight);
             adjustScale();
         })()
     });

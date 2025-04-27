@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>React</title>
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
- 
+
   <script type="importmap">
     {
       "imports": {
@@ -85,16 +85,15 @@
     import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
     import { proxy, ref } from 'valtio';
     import { useProxy } from 'valtio/utils';
-    import { Button, ThemeProvider, createTheme, Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, BottomNavigation, BottomNavigationAction } from '@mui/material';
+    import { Button, ThemeProvider, createTheme, Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, BottomNavigation, BottomNavigationAction, Menu, MenuItem, Avatar, Divider, Paper, Popover } from '@mui/material';
     import { initializeApp } from 'firebase/app';
     import { getAuth } from 'firebase/auth';
     import { getFirestore } from 'firebase/firestore';
     import { getMessaging, getToken, onMessage } from "firebase/messaging";
     import { getStorage } from 'firebase/storage';
+    import { onAuthStateChanged, signOut } from 'firebase/auth'; // Import auth state listener and sign out
     import * as Icons from '@mui/icons-material';
 
-    const { default: HomePage } = await utils.dynamicImport('HomePage.jsx');
-    const { default: SettingsPage } = await utils.dynamicImport('SettingsPage.jsx');
 
     let serviceAccountFirebase = {
       apiKey: "AIzaSyCWzeya7dZmsE7XkQvOECKEXXarsMKgmH4",
@@ -126,8 +125,45 @@
 
     window.fetchRoutine();
 
+    // Initialize Firebase App and Auth
+    const app = initializeApp(serviceAccountFirebase);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const messaging = getMessaging(app);
 
-    onMessage(getMessaging(initializeApp(serviceAccountFirebase)), (payload) => {
+
+    const { default: HomePage } = await utils.dynamicImport('HomePage.jsx');
+    const { default: SettingsPage } = await utils.dynamicImport('SettingsPage.jsx');
+    const { default: AuthPage } = await utils.dynamicImport('AuthPage.jsx'); // Import the AuthPage component
+    window.AuthPage = AuthPage; // Make AuthPage available globally
+    const { default: ProfilePage } = await utils.dynamicImport('ProfilePage.jsx'); // Import the ProfilePage component
+
+    // Auth state listener
+    onAuthStateChanged(auth, (user) => {
+
+      // Check if user is signed in and using email/password but not verified
+      if (user && user.providerData[0].providerId === 'password' && !user.emailVerified) {
+        console.log("User signed in with unverified email");
+        // We'll still set the user in state, but the app will show verification required message
+        state.user = ref(user);
+        state.emailVerified = false;
+      } else if (user) {
+        // User is either verified or using a different auth method
+        state.user = ref(user);
+        state.emailVerified = true;
+
+        // User is verified or using a different auth method
+      } else {
+        // No user is signed in
+        state.user = null;
+        state.emailVerified = false;
+      }
+      console.log("Auth state changed, user:", user);
+      render(); // Re-render the app on auth state change
+    });
+
+    onMessage(messaging, (payload) => {
       console.log('Message received. ', payload);
       utils.notify(payload.notification.title, payload.notification.body);
       window.fetchRoutine();
@@ -136,22 +172,182 @@
 
     function App() {
       const proxyState = useProxy(state);
+      const [drawerOpen, setDrawerOpen] = React.useState(false);
+      const [anchorEl, setAnchorEl] = React.useState(null);
+      const open = Boolean(anchorEl);
 
-      return (
-        <div className={`h-[${window.innerHeight}px] flex flex-col w-full`} >
-          <Router>
+      const handleUserMenuClick = (event) => {
+        console.log(event.currentTarget);
+        setAnchorEl(event.currentTarget);
+      };
+
+      const handleUserMenuClose = () => {
+        setAnchorEl(null);
+      };
+
+      const handleSignOut = async () => {
+        try {
+          await signOut(auth);
+          handleUserMenuClose();
+          // Auth state listener will handle the UI update
+        } catch (error) {
+          console.error("Sign out error:", error);
+          utils.notify("Sign Out Error", error.message, "#F44336");
+        }
+      };
+
+      const handleSignIn = () => {
+        handleUserMenuClose();
+        // Use the router to navigate to the auth page
+        window.location.hash = "#/auth";
+      };
+
+      // Check if user is logged in with email but not verified
+      if (proxyState.user && !proxyState.emailVerified && proxyState.user.providerData[0].providerId === 'password') {
+        return (
+          <div className="w-full h-full flex items-center justify-center p-4">
+            <Paper elevation={3} className="p-6 max-w-md">
+              <Typography variant="h5" className="text-center mb-4">
+                Email Verification Required
+              </Typography>
+              <Typography variant="body1" className="text-center mb-4">
+                Please check your email and click the verification link to activate your account.
+                If you don't see the email, check your spam folder.
+              </Typography>
+              <Box className="flex flex-col gap-2">
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={async () => {
+                    try {
+                      await signOut(auth);
+                      // Use the router to navigate to the auth page
+                      window.location.hash = "#/auth";
+                    } catch (error) {
+                      console.error("Sign out error:", error);
+                    }
+                  }}
+                  startIcon={<Icons.Logout />}
+                >
+                  Sign Out
+                </Button>
+              </Box>
+            </Paper>
+          </div>
+        );
+      }
+
+      // Both logged-in and non-logged-in users can access the application
+      // Just with different UI elements
+
+      // Layout component for pages that should have the app shell (sidebar, topbar, etc.)
+      const AppLayout = () => {
+        return (
+          <>
             <div className="z-10 !shadow-[0_2px_4px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-4xl md:max-w-full mx-auto sticky top-0" >
               {proxyState.appBar || (
-                <div className="bg-blue-600 px-6 py-4">
-                  <div className="w-full max-w-4xl mx-auto">
-                    <Typography variant="h5" className="text-white font-medium">
+                <AppBar position="static" className="bg-blue-600">
+                  <Toolbar className="w-full max-w-4xl mx-auto">
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="text-white font-medium">
                       Automated Class Routine
                     </Typography>
-                    <Typography variant="body2" className="text-blue-100 mt-1">
-                      Semester: <a href="#" className="text-white hover:underline">Spring 2025</a>
-                    </Typography>
-                  </div>
-                </div>
+
+                    {/* User Icon Button */}
+                    {proxyState.user ? (
+                      <IconButton
+                        id="basic-button" // Used for aria-controls and aria-labelledby
+                        onClick={handleUserMenuClick}
+                        size="small"
+                        aria-controls={open ? 'user-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={open ? 'true' : undefined}
+                        sx={{ ml: 2 }}
+                      >
+                        <Avatar
+                          src={proxyState.user?.photoURL} // Use photoURL if available
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: proxyState.user ? 'primary.main' : 'grey.500'
+                          }}
+                        >
+                          {proxyState.user
+                            ? (proxyState.user.email?.charAt(0).toUpperCase() || proxyState.user.phoneNumber?.charAt(1) || 'U')
+                            : <Icons.Person />
+                          }
+                        </Avatar>
+                      </IconButton>
+                    ) : <MenuItem key="signin" onClick={handleSignIn}>
+                      <ListItemIcon className="!text-white">
+                        <Icons.Login fontSize="small" />
+                      </ListItemIcon>
+                      <span className="!text-white">Sign In</span>
+                    </MenuItem>}
+
+                    {/* User Menu (Reimplemented with Menu) */}
+                    <Menu
+                      id="user-menu"
+                      anchorEl={() => document.getElementById('basic-button')} // Use the IconButton as the anchor
+                      open={open}
+                      onClose={handleUserMenuClose}
+                      MenuListProps={{
+                        'aria-labelledby': 'basic-button', // Use the IconButton as the label source
+                      }}
+                      anchorOrigin={{ // Position menu below the anchor
+                        vertical: 'bottom',
+                        horizontal: 'right',
+                      }}
+                      transformOrigin={{ // Align menu's top-right with anchor's bottom-right
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                      PaperProps={{
+                        elevation: 3,
+                        sx: { minWidth: 180, mt: 1 } // Add a little margin-top
+                      }}
+                    >
+                      {/* Keep MenuItems the same, but wrap actions in handleUserMenuClose */}
+                      {proxyState.user ? [
+                        <MenuItem key="user-info" disabled sx={{ opacity: '1 !important' }}>
+                          <Box>
+                            <Typography variant="body2" noWrap sx={{ maxWidth: 160, fontWeight: 500 }}>
+                              {proxyState.user?.email || proxyState.user?.phoneNumber || "User"}
+                            </Typography>
+                            <Typography variant="caption" noWrap sx={{ maxWidth: 160, color: 'text.secondary' }}>
+                              ID: {proxyState.user?.uid?.substring(0, 8)}...
+                            </Typography>
+                          </Box>
+                        </MenuItem>,
+                        <Divider key="divider" />,
+                        <MenuItem key="profile" onClick={() => { handleUserMenuClose(); window.location.hash = "#/profile"; }}>
+                          <ListItemIcon>
+                            <Icons.AccountCircle fontSize="small" />
+                          </ListItemIcon>
+                          Profile
+                        </MenuItem>,
+                        <MenuItem key="signout" onClick={handleSignOut}>
+                          <ListItemIcon>
+                            <Icons.Logout fontSize="small" />
+                          </ListItemIcon>
+                          Sign Out
+                        </MenuItem>
+                      ] : [
+                        <MenuItem key="signin" onClick={handleSignIn}>
+                          <ListItemIcon>
+                            <Icons.Login fontSize="small" />
+                          </ListItemIcon>
+                          Sign In
+                        </MenuItem>,
+                        <MenuItem key="signup" onClick={handleSignIn}>
+                          <ListItemIcon>
+                            <Icons.PersonAdd fontSize="small" />
+                          </ListItemIcon>
+                          Sign Up
+                        </MenuItem>
+                      ]}
+                    </Menu>
+                  </Toolbar>
+                </AppBar>
               )}
             </div>
             <div className={`w-full grow flex flex-col overflow-auto relative `}>
@@ -179,6 +375,14 @@
                             <ListItemText primary="Notifications" />
                           </ListItemButton>
                         </ListItem>
+                        <ListItem disablePadding>
+                          <ListItemButton component={Link} to="/profile">
+                            <ListItemIcon>
+                              <Icons.AccountCircle />
+                            </ListItemIcon>
+                            <ListItemText primary="Profile" />
+                          </ListItemButton>
+                        </ListItem>
                       </List>
                     </div>
                   </div>
@@ -188,6 +392,7 @@
                     <Routes>
                       <Route path="/" element={<HomePage />} />
                       <Route path="/notifications" element={<SettingsPage />} />
+                      <Route path="/profile" element={<ProfilePage />} />
                     </Routes>
                   </main>
                 </div>
@@ -201,7 +406,24 @@
             >
               <BottomNavigationAction component={Link} to="/" label="Home" icon={<Icons.Home />} />
               <BottomNavigationAction component={Link} to="/notifications" label="Notifications" icon={<Icons.Notifications />} />
+              {proxyState.user && (
+                <BottomNavigationAction component={Link} to="/profile" label="Profile" icon={<Icons.AccountCircle />} />
+              )}
             </BottomNavigation>
+          </>
+        );
+      };
+
+      return (
+        <div className={`h-[${window.innerHeight}px] flex flex-col w-full`} >
+          <Router>
+            <Routes>
+              {/* Auth route without the app layout */}
+              <Route path="/auth" element={<AuthPage />} />
+
+              {/* All other routes with the app layout */}
+              <Route path="/*" element={<AppLayout />} />
+            </Routes>
           </Router>
         </div>
       );

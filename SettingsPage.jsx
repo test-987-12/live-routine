@@ -367,24 +367,6 @@ const NotificationSettings = () => {
     proxyState.courseTags == null ||
     proxyState.teacherTags == null;
 
-  useEffect(() => {
-    state.appBar = (
-      <div className="bg-blue-600 px-6 py-4">
-        <div className="w-full max-w-4xl mx-auto">
-          <Typography variant="h5" className="text-white font-medium">
-            Notification Preferences
-          </Typography>
-          <Typography variant="body2" className="text-blue-100 mt-1">
-            Customize how and when you receive notifications
-          </Typography>
-        </div>
-      </div>
-    );
-    return () => {
-      state.appBar = null;
-    }
-  }, [])
-
 
   if (isLoading) {
     return (
