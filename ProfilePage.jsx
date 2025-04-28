@@ -1,13 +1,95 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useProxy } from 'valtio/utils';
-import { Typography, Paper, Box, Avatar, Divider } from '@mui/material';
+import { Typography, Paper, Box, Avatar, Divider, Button, Alert, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import * as Icons from '@mui/icons-material';
+import { getAuth, sendPasswordResetEmail, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 
 // We'll need to reference the AuthPage component
 const AuthPage = window.AuthPage;
 
 const ProfilePage = () => {
   const proxyState = useProxy(window.state);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  // Check if user is signed in with Google
+  const isGoogleUser = () => {
+    return proxyState.user &&
+           proxyState.user.providerData &&
+           proxyState.user.providerData.some(provider => provider.providerId === 'google.com');
+  };
+
+  // Check if user has password provider
+  const hasPasswordProvider = () => {
+    return proxyState.user &&
+           proxyState.user.providerData &&
+           proxyState.user.providerData.some(provider => provider.providerId === 'password');
+  };
+
+  // Function to handle setting a password for Google users
+  const handleSetPassword = async () => {
+    setPasswordError('');
+
+    // Validate password
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long');
+      return;
+    }
+
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const auth = getAuth();
+      const credential = EmailAuthProvider.credential(proxyState.user.email, password);
+
+      // Link the Google account with email/password
+      await linkWithCredential(auth.currentUser, credential);
+
+      setSuccess('Password has been set successfully! You can now sign in with your email and password.');
+      setOpenPasswordDialog(false);
+      setPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      console.error('Error setting password:', err);
+      setPasswordError(err.message || 'Failed to set password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle password reset
+  const handleResetPassword = async () => {
+    if (!proxyState.user || !proxyState.user.email) {
+      setError('You need to be signed in with an email account to reset your password.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, proxyState.user.email);
+      setSuccess('Password reset email sent! Please check your inbox and spam folder.');
+    } catch (err) {
+      console.error('Error sending password reset email:', err);
+      setError(err.message || 'Failed to send password reset email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Use effect to sign in anonymously if not logged in
   React.useEffect(() => {
@@ -37,7 +119,7 @@ const ProfilePage = () => {
     );
   }
 
-  return (
+  const renderContent = () => (
     <div className="w-full grow flex flex-col bg-white p-6 max-w-6xl mx-auto rounded-lg">
       {proxyState.isAnonymous && (
         <Box className="mb-4 p-2 bg-blue-50 rounded-md">
@@ -46,6 +128,10 @@ const ProfilePage = () => {
           </Typography>
         </Box>
       )}
+      {/* Display error and success messages */}
+      {error && <Alert severity="error" className="mb-4">{error}</Alert>}
+      {success && <Alert severity="success" className="mb-4">{success}</Alert>}
+
       <Paper elevation={2} className="p-6">
         <Box className="flex flex-col items-center mb-6">
           <Avatar
@@ -123,9 +209,114 @@ const ProfilePage = () => {
               </Typography>
             </div>
           </Box>
+
+          {/* Password Management Section - only show for non-anonymous users with email */}
+          {!proxyState.isAnonymous && proxyState.user.email && (
+            <Box className="pt-4">
+              <Divider className="!mb-4" />
+
+              {/* For Google users without password provider */}
+              {isGoogleUser() && !hasPasswordProvider() && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={loading ? <CircularProgress size={20} /> : <Icons.Lock />}
+                  onClick={() => setOpenPasswordDialog(true)}
+                  disabled={loading}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                >
+                  Set Password
+                </Button>
+              )}
+
+              {/* For users with password provider or Google users who have set a password */}
+              {(hasPasswordProvider() || (isGoogleUser() && hasPasswordProvider())) && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={loading ? <CircularProgress size={20} /> : <Icons.LockReset />}
+                  onClick={handleResetPassword}
+                  disabled={loading}
+                  fullWidth
+                >
+                  Reset Password
+                </Button>
+              )}
+
+              <Typography variant="caption" color="textSecondary" className="mt-2 block text-center">
+                {isGoogleUser() && !hasPasswordProvider()
+                  ? "Set a password to sign in with email and password in addition to Google."
+                  : "A password reset link will be sent to your email address."}
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
     </div>
+  );
+
+  // Password Dialog for Google users to set a password
+  const renderPasswordDialog = () => (
+    <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
+      <DialogTitle>Set Password</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Setting a password will allow you to sign in with your email and password in addition to Google.
+        </Typography>
+
+        {passwordError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {passwordError}
+          </Alert>
+        )}
+
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Password"
+          type="password"
+          fullWidth
+          variant="outlined"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+          sx={{ mb: 2 }}
+          placeholder="At least 6 characters"
+        />
+
+        <TextField
+          margin="dense"
+          label="Confirm Password"
+          type="password"
+          fullWidth
+          variant="outlined"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={loading}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setOpenPasswordDialog(false)} disabled={loading}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSetPassword}
+          variant="contained"
+          color="primary"
+          disabled={loading || !password || !confirmPassword}
+        >
+          {loading ? <CircularProgress size={24} /> : 'Set Password'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  return (
+    <>
+      {renderContent()}
+      {renderPasswordDialog()}
+    </>
   );
 };
 

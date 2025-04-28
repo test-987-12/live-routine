@@ -91,7 +91,7 @@
 
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script data-type="module" type="text/babel">
-    import React from 'react';
+    import React, { useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
     import { proxy, ref } from 'valtio';
@@ -205,21 +205,13 @@
     });
 
 
-    function App() {
+    function AppBarComponent() {
+      const auth = getAuth();
       const proxyState = useProxy(state);
-      const [drawerOpen, setDrawerOpen] = React.useState(false);
-      const [anchorEl, setAnchorEl] = React.useState(null);
+      const [anchorEl, setAnchorEl] = useState(null);
       const open = Boolean(anchorEl);
 
-      // Show loading spinner while auth state is being resolved
-      if (proxyState.authLoading) {
-        return (
-          null
-        );
-      }
-
       const handleUserMenuClick = (event) => {
-        console.log(event.currentTarget);
         setAnchorEl(event.currentTarget);
       };
 
@@ -243,6 +235,125 @@
         // Use the router to navigate to the auth page
         window.location.hash = "#/auth";
       };
+
+      return (
+        <AppBar position="static" className="bg-blue-600">
+          <Toolbar className="w-full max-w-4xl mx-auto">
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="text-white font-medium">
+              <span onClick={() => window.location.hash = "#/"} className="cursor-pointer">Automated Class Routine</span>
+            </Typography>
+
+            {/* User Icon Button */}
+            {proxyState.user && !proxyState.isAnonymous ? (
+              <IconButton
+                id="basic-button" // Used for aria-controls and aria-labelledby
+                onClick={handleUserMenuClick}
+                size="small"
+                aria-controls={open ? 'user-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={open ? 'true' : undefined}
+                sx={{ ml: 2 }}
+              >
+                <Avatar
+                  src={proxyState.user?.photoURL} // Use photoURL if available
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: proxyState.user ? 'primary.main' : 'grey.500'
+                  }}
+                >
+                  {proxyState.user
+                    ? (proxyState.user.email?.charAt(0).toUpperCase() || proxyState.user.phoneNumber?.charAt(1) || 'U')
+                    : <Icons.Person />
+                  }
+                </Avatar>
+              </IconButton>
+            ) : (
+              <MenuItem key="signin" onClick={handleSignIn}>
+                <ListItemIcon className="!text-white">
+                  <Icons.Login fontSize="small" />
+                </ListItemIcon>
+              </MenuItem>
+            )}
+
+            {/* User Menu (Reimplemented with Menu) */}
+            <Menu
+              id="user-menu"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleUserMenuClose}
+              MenuListProps={{
+                'aria-labelledby': 'basic-button', // Use the IconButton as the label source
+              }}
+              anchorOrigin={{ // Position menu below the anchor
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{ // Align menu's top-right with anchor's bottom-right
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              PaperProps={{
+                elevation: 3,
+                sx: { minWidth: 180, mt: 1 } // Add a little margin-top
+              }}
+            >
+              {/* Keep MenuItems the same, but wrap actions in handleUserMenuClose */}
+              {proxyState.user && !proxyState.isAnonymous ? [
+                <MenuItem key="user-info" disabled sx={{ opacity: '1 !important' }}>
+                  <Box>
+                    <Typography variant="body2" noWrap sx={{ maxWidth: 160, fontWeight: 500 }}>
+                      {proxyState.user?.email || proxyState.user?.phoneNumber || "User"}
+                    </Typography>
+                    <Typography variant="caption" noWrap sx={{ maxWidth: 160, color: 'text.secondary' }}>
+                      ID: {proxyState.user?.uid?.substring(0, 8)}...
+                    </Typography>
+                  </Box>
+                </MenuItem>,
+                <Divider key="divider" />,
+                <MenuItem key="profile" onClick={() => { handleUserMenuClose(); window.location.hash = "#/profile"; }}>
+                  <ListItemIcon>
+                    <Icons.AccountCircle fontSize="small" />
+                  </ListItemIcon>
+                  Profile
+                </MenuItem>,
+                <MenuItem key="signout" onClick={handleSignOut}>
+                  <ListItemIcon>
+                    <Icons.Logout fontSize="small" />
+                  </ListItemIcon>
+                  Sign Out
+                </MenuItem>
+              ] : [
+                <MenuItem key="signin" onClick={handleSignIn}>
+                  <ListItemIcon>
+                    <Icons.Login fontSize="small" />
+                  </ListItemIcon>
+                  Sign In
+                </MenuItem>,
+                <MenuItem key="signup" onClick={handleSignIn}>
+                  <ListItemIcon>
+                    <Icons.PersonAdd fontSize="small" />
+                  </ListItemIcon>
+                  Sign Up
+                </MenuItem>
+              ]}
+            </Menu>
+          </Toolbar>
+        </AppBar>
+      );
+    }
+
+
+    function App() {
+      const proxyState = useProxy(state);
+      const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+      // Show loading spinner while auth state is being resolved
+      if (proxyState.authLoading) {
+        return (
+          null
+        );
+      }
 
       // Check if user is logged in with email but not verified
       if (proxyState.user && !proxyState.emailVerified && proxyState.user.providerData[0].providerId === 'password') {
@@ -268,6 +379,7 @@
                       window.location.hash = "#/auth";
                     } catch (error) {
                       console.error("Sign out error:", error);
+                      utils.notify("Sign Out Error", error.message, "#F44336");
                     }
                   }}
                   startIcon={<Icons.Logout />}
@@ -293,109 +405,7 @@
         return (
           <>
             <div className="z-10 !shadow-[0_2px_4px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-4xl md:max-w-full mx-auto sticky top-0" >
-              {proxyState.appBar || (
-                <AppBar position="static" className="bg-blue-600">
-                  <Toolbar className="w-full max-w-4xl mx-auto">
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="text-white font-medium">
-                      <span onClick={() => window.location.hash = "#/"} className="cursor-pointer">Automated Class Routine</span>
-                    </Typography>
-
-                    {/* User Icon Button */}
-                    {proxyState.user && !proxyState.isAnonymous ? (
-                      <IconButton
-                        id="basic-button" // Used for aria-controls and aria-labelledby
-                        onClick={handleUserMenuClick}
-                        size="small"
-                        aria-controls={open ? 'user-menu' : undefined}
-                        aria-haspopup="true"
-                        aria-expanded={open ? 'true' : undefined}
-                        sx={{ ml: 2 }}
-                      >
-                        <Avatar
-                          src={proxyState.user?.photoURL} // Use photoURL if available
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            bgcolor: proxyState.user ? 'primary.main' : 'grey.500'
-                          }}
-                        >
-                          {proxyState.user
-                            ? (proxyState.user.email?.charAt(0).toUpperCase() || proxyState.user.phoneNumber?.charAt(1) || 'U')
-                            : <Icons.Person />
-                          }
-                        </Avatar>
-                      </IconButton>
-                    ) : <MenuItem key="signin" onClick={handleSignIn}>
-                      <ListItemIcon className="!text-white">
-                        <Icons.Login fontSize="small" />
-                      </ListItemIcon>
-                    </MenuItem>}
-
-                    {/* User Menu (Reimplemented with Menu) */}
-                    <Menu
-                      id="user-menu"
-                      anchorEl={() => document.getElementById('basic-button')} // Use the IconButton as the anchor
-                      open={open}
-                      onClose={handleUserMenuClose}
-                      MenuListProps={{
-                        'aria-labelledby': 'basic-button', // Use the IconButton as the label source
-                      }}
-                      anchorOrigin={{ // Position menu below the anchor
-                        vertical: 'bottom',
-                        horizontal: 'right',
-                      }}
-                      transformOrigin={{ // Align menu's top-right with anchor's bottom-right
-                        vertical: 'top',
-                        horizontal: 'right',
-                      }}
-                      PaperProps={{
-                        elevation: 3,
-                        sx: { minWidth: 180, mt: 1 } // Add a little margin-top
-                      }}
-                    >
-                      {/* Keep MenuItems the same, but wrap actions in handleUserMenuClose */}
-                      {proxyState.user && !proxyState.isAnonymous ? [
-                        <MenuItem key="user-info" disabled sx={{ opacity: '1 !important' }}>
-                          <Box>
-                            <Typography variant="body2" noWrap sx={{ maxWidth: 160, fontWeight: 500 }}>
-                              {proxyState.user?.email || proxyState.user?.phoneNumber || "User"}
-                            </Typography>
-                            <Typography variant="caption" noWrap sx={{ maxWidth: 160, color: 'text.secondary' }}>
-                              ID: {proxyState.user?.uid?.substring(0, 8)}...
-                            </Typography>
-                          </Box>
-                        </MenuItem>,
-                        <Divider key="divider" />,
-                        <MenuItem key="profile" onClick={() => { handleUserMenuClose(); window.location.hash = "#/profile"; }}>
-                          <ListItemIcon>
-                            <Icons.AccountCircle fontSize="small" />
-                          </ListItemIcon>
-                          Profile
-                        </MenuItem>,
-                        <MenuItem key="signout" onClick={handleSignOut}>
-                          <ListItemIcon>
-                            <Icons.Logout fontSize="small" />
-                          </ListItemIcon>
-                          Sign Out
-                        </MenuItem>
-                      ] : [
-                        <MenuItem key="signin" onClick={handleSignIn}>
-                          <ListItemIcon>
-                            <Icons.Login fontSize="small" />
-                          </ListItemIcon>
-                          Sign In
-                        </MenuItem>,
-                        <MenuItem key="signup" onClick={handleSignIn}>
-                          <ListItemIcon>
-                            <Icons.PersonAdd fontSize="small" />
-                          </ListItemIcon>
-                          Sign Up
-                        </MenuItem>
-                      ]}
-                    </Menu>
-                  </Toolbar>
-                </AppBar>
-              )}
+              {proxyState.appBar || <AppBarComponent />}
             </div>
             <div className={`w-full grow flex flex-col overflow-y-scroll relative `}>
               <div className={`w-full grow flex flex-col max-w-4xl mx-auto `}>
@@ -421,11 +431,11 @@
                                 content: '""',
                                 position: 'absolute',
                                 left: 0,
-                                top: '10%',
-                                height: '80%',
+                                top: '20%',
+                                height: '60%',
                                 width: '4px',
                                 backgroundColor: '#2563eb', // blue-600
-                                borderRadius: '0 2px 2px 0'
+                                borderRadius: '0 3px 3px 0'
                               } : {}
                             }}
                           >
@@ -450,11 +460,11 @@
                                 content: '""',
                                 position: 'absolute',
                                 left: 0,
-                                top: '10%',
-                                height: '80%',
+                                top: '20%',
+                                height: '60%',
                                 width: '4px',
                                 backgroundColor: '#2563eb', // blue-600
-                                borderRadius: '0 2px 2px 0'
+                                borderRadius: '0 3px 3px 0'
                               } : {}
                             }}
                           >
@@ -479,11 +489,11 @@
                                 content: '""',
                                 position: 'absolute',
                                 left: 0,
-                                top: '10%',
-                                height: '80%',
+                                top: '20%',
+                                height: '60%',
                                 width: '4px',
                                 backgroundColor: '#2563eb', // blue-600
-                                borderRadius: '0 2px 2px 0'
+                                borderRadius: '0 3px 3px 0'
                               } : {}
                             }}
                           >
