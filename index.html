@@ -5,13 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>React</title>
-  <link href='https://fonts.googleapis.com/css?family=Space Mono' rel='stylesheet'>
   <link href='https://fonts.googleapis.com/css?family=Space Grotesk' rel='stylesheet'>
+  <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
   <style>
     html,
     body {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: 'Poppins', sans-serif;
       margin: 0;
       padding: 0;
     }
@@ -207,7 +207,7 @@
 
     function AppBarComponent() {
       const auth = getAuth();
-      const proxyState = useProxy(state);
+      const globalState = useProxy(state);
       const [anchorEl, setAnchorEl] = useState(null);
       const open = Boolean(anchorEl);
 
@@ -244,7 +244,7 @@
             </Typography>
 
             {/* User Icon Button */}
-            {proxyState.user && !proxyState.isAnonymous ? (
+            {globalState.user && !globalState.isAnonymous ? (
               <IconButton
                 id="basic-button" // Used for aria-controls and aria-labelledby
                 onClick={handleUserMenuClick}
@@ -255,15 +255,15 @@
                 sx={{ ml: 2 }}
               >
                 <Avatar
-                  src={proxyState.user?.photoURL} // Use photoURL if available
+                  src={globalState.user?.photoURL} // Use photoURL if available
                   sx={{
                     width: 32,
                     height: 32,
-                    bgcolor: proxyState.user ? 'primary.main' : 'grey.500'
+                    bgcolor: globalState.user ? 'primary.main' : 'grey.500'
                   }}
                 >
-                  {proxyState.user
-                    ? (proxyState.user.email?.charAt(0).toUpperCase() || proxyState.user.phoneNumber?.charAt(1) || 'U')
+                  {globalState.user
+                    ? (globalState.user.email?.charAt(0).toUpperCase() || globalState.user.phoneNumber?.charAt(1) || 'U')
                     : <Icons.Person />
                   }
                 </Avatar>
@@ -299,14 +299,14 @@
               }}
             >
               {/* Keep MenuItems the same, but wrap actions in handleUserMenuClose */}
-              {proxyState.user && !proxyState.isAnonymous ? [
+              {globalState.user && !globalState.isAnonymous ? [
                 <MenuItem key="user-info" disabled sx={{ opacity: '1 !important' }}>
                   <Box>
                     <Typography variant="body2" noWrap sx={{ maxWidth: 160, fontWeight: 500 }}>
-                      {proxyState.user?.email || proxyState.user?.phoneNumber || "User"}
+                      {globalState.user?.email || globalState.user?.phoneNumber || "User"}
                     </Typography>
                     <Typography variant="caption" noWrap sx={{ maxWidth: 160, color: 'text.secondary' }}>
-                      ID: {proxyState.user?.uid?.substring(0, 8)}...
+                      ID: {globalState.user?.uid?.substring(0, 8)}...
                     </Typography>
                   </Box>
                 </MenuItem>,
@@ -345,18 +345,18 @@
 
 
     function App() {
-      const proxyState = useProxy(state);
+      const globalState = useProxy(state);
       const [drawerOpen, setDrawerOpen] = React.useState(false);
 
       // Show loading spinner while auth state is being resolved
-      if (proxyState.authLoading) {
+      if (globalState.authLoading) {
         return (
           null
         );
       }
 
       // Check if user is logged in with email but not verified
-      if (proxyState.user && !proxyState.emailVerified && proxyState.user.providerData[0].providerId === 'password') {
+      if (globalState.user && !globalState.emailVerified && globalState.user.providerData[0].providerId === 'password') {
         return (
           <div className="h-screen w-full flex flex-col overflow-auto items-center">
             <div className="grow"></div>
@@ -405,7 +405,7 @@
         return (
           <>
             <div className="z-10 !shadow-[0_2px_4px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-4xl md:max-w-full mx-auto sticky top-0" >
-              {proxyState.appBar || <AppBarComponent />}
+              {globalState.appBar || <AppBarComponent />}
             </div>
             <div className={`w-full grow flex flex-col overflow-y-scroll relative `}>
               <div className={`w-full grow flex flex-col max-w-4xl mx-auto `}>
@@ -606,7 +606,7 @@
     }
     const THEME = createTheme({
       typography: {
-        "fontFamily": `"Space Grotesk", "Helvetica", "Arial", sans-serif`,
+        "fontFamily": `"Poppins", "Helvetica", "Arial", sans-serif`,
         "fontSize": 14,
         "fontWeightLight": 300,
         "fontWeightRegular": 400,
@@ -620,9 +620,7 @@
 
         <div className="bg-white text-black">
           <MuiThemeProvider theme={THEME}>
-            {window.location.protocol == 'http:' && <ErrorBoundary>
-              <App />
-            </ErrorBoundary> || <App />}
+            <App />
           </MuiThemeProvider>
         </div>
       );

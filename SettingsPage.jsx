@@ -286,6 +286,7 @@ let loadPrefs = (async () => {
   state.sectionTags = (data.tags?.section || []);
   state.courseTags = (data.tags?.course || []);
   state.teacherTags = (data.tags?.teacher || []);
+  state.userPref = (data || {});
 });
 
 const NotificationSettings = () => {
@@ -327,7 +328,10 @@ const NotificationSettings = () => {
       return;
     }
 
+    let currentPrefs = await (await fetch(`https://nub-live-default-rtdb.asia-southeast1.firebasedatabase.app/preferences/${state.user.uid}.json`)).json();
+
     const subscriptionData = {
+      ...(currentPrefs || {}),
       id: state.user.uid,
       utctimestamp: Date.now(),
       anonymous: state.user.isAnonymous,

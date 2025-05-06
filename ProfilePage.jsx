@@ -8,7 +8,7 @@ import { getAuth, sendPasswordResetEmail, EmailAuthProvider, linkWithCredential 
 const AuthPage = window.AuthPage;
 
 const ProfilePage = () => {
-  const proxyState = useProxy(window.state);
+  const globalState = useProxy(window.state);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -19,16 +19,16 @@ const ProfilePage = () => {
 
   // Check if user is signed in with Google
   const isGoogleUser = () => {
-    return proxyState.user &&
-           proxyState.user.providerData &&
-           proxyState.user.providerData.some(provider => provider.providerId === 'google.com');
+    return globalState.user &&
+           globalState.user.providerData &&
+           globalState.user.providerData.some(provider => provider.providerId === 'google.com');
   };
 
   // Check if user has password provider
   const hasPasswordProvider = () => {
-    return proxyState.user &&
-           proxyState.user.providerData &&
-           proxyState.user.providerData.some(provider => provider.providerId === 'password');
+    return globalState.user &&
+           globalState.user.providerData &&
+           globalState.user.providerData.some(provider => provider.providerId === 'password');
   };
 
   // Function to handle setting a password for Google users
@@ -51,7 +51,7 @@ const ProfilePage = () => {
 
     try {
       const auth = getAuth();
-      const credential = EmailAuthProvider.credential(proxyState.user.email, password);
+      const credential = EmailAuthProvider.credential(globalState.user.email, password);
 
       // Link the Google account with email/password
       await linkWithCredential(auth.currentUser, credential);
@@ -70,7 +70,7 @@ const ProfilePage = () => {
 
   // Function to handle password reset
   const handleResetPassword = async () => {
-    if (!proxyState.user || !proxyState.user.email) {
+    if (!globalState.user || !globalState.user.email) {
       setError('You need to be signed in with an email account to reset your password.');
       return;
     }
@@ -81,7 +81,7 @@ const ProfilePage = () => {
 
     try {
       const auth = getAuth();
-      await sendPasswordResetEmail(auth, proxyState.user.email);
+      await sendPasswordResetEmail(auth, globalState.user.email);
       setSuccess('Password reset email sent! Please check your inbox and spam folder.');
     } catch (err) {
       console.error('Error sending password reset email:', err);
@@ -93,19 +93,19 @@ const ProfilePage = () => {
 
   // Use effect to sign in anonymously if not logged in
   React.useEffect(() => {
-    if (!proxyState.user) {
+    if (!globalState.user) {
       console.log("ProfilePage: User not logged in, signing in anonymously");
       window.signInAnonymously();
     }
-  }, [proxyState.user]);
+  }, [globalState.user]);
 
   // Don't render anything if auth is still loading
-  if (proxyState.authLoading) {
+  if (globalState.authLoading) {
     return null;
   }
 
   // Show loading while signing in anonymously
-  if (!proxyState.user) {
+  if (!globalState.user) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div
@@ -121,7 +121,7 @@ const ProfilePage = () => {
 
   const renderContent = () => (
     <div className="w-full grow flex flex-col bg-white p-6 max-w-6xl mx-auto rounded-lg">
-      {proxyState.isAnonymous && (
+      {globalState.isAnonymous && (
         <Box className="mb-4 p-2 bg-blue-50 rounded-md">
           <Typography variant="body2" color="primary">
             You are currently using the app anonymously. <a href="#/auth" className="text-blue-600 underline">Sign in</a> to save your preferences.
@@ -135,7 +135,7 @@ const ProfilePage = () => {
       <Paper elevation={2} className="p-6">
         <Box className="flex flex-col items-center mb-6">
           <Avatar
-            src={proxyState.user.photoURL} // Use photoURL if available
+            src={globalState.user.photoURL} // Use photoURL if available
             sx={{
               width: 80,
               height: 80,
@@ -144,8 +144,8 @@ const ProfilePage = () => {
               mb: 2
             }}
           >
-            {proxyState.user.email?.charAt(0).toUpperCase() ||
-             proxyState.user.phoneNumber?.charAt(1) || 'U'}
+            {globalState.user.email?.charAt(0).toUpperCase() ||
+             globalState.user.phoneNumber?.charAt(1) || 'U'}
           </Avatar>
           <Typography variant="h5" className="font-medium">
             User Profile
@@ -163,12 +163,12 @@ const ProfilePage = () => {
                 User ID
               </Typography>
               <Typography variant="body1" className="break-all">
-                {proxyState.user.uid || 'Unknown'}
+                {globalState.user.uid || 'Unknown'}
               </Typography>
             </div>
           </Box>
 
-          {proxyState.user.email && (
+          {globalState.user.email && (
             <Box className="flex items-center">
               <Icons.Email className="mr-3 text-gray-500" />
               <div>
@@ -176,13 +176,13 @@ const ProfilePage = () => {
                   Email
                 </Typography>
                 <Typography variant="body1">
-                  {proxyState.user.email}
+                  {globalState.user.email}
                 </Typography>
               </div>
             </Box>
           )}
 
-          {proxyState.user.phoneNumber && (
+          {globalState.user.phoneNumber && (
             <Box className="flex items-center">
               <Icons.Phone className="mr-3 text-gray-500" />
               <div>
@@ -190,7 +190,7 @@ const ProfilePage = () => {
                   Phone
                 </Typography>
                 <Typography variant="body1">
-                  {proxyState.user.phoneNumber}
+                  {globalState.user.phoneNumber}
                 </Typography>
               </div>
             </Box>
@@ -203,15 +203,15 @@ const ProfilePage = () => {
                 Account Created
               </Typography>
               <Typography variant="body1">
-                {proxyState.user.metadata?.creationTime
-                  ? new Date(proxyState.user.metadata.creationTime).toLocaleDateString()
+                {globalState.user.metadata?.creationTime
+                  ? new Date(globalState.user.metadata.creationTime).toLocaleDateString()
                   : 'Unknown'}
               </Typography>
             </div>
           </Box>
 
           {/* Password Management Section - only show for non-anonymous users with email */}
-          {!proxyState.isAnonymous && proxyState.user.email && (
+          {!globalState.isAnonymous && globalState.user.email && (
             <Box className="pt-4">
               <Divider className="!mb-4" />
 

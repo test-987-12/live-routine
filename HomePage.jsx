@@ -214,12 +214,12 @@ function extractRoutineFiltered(json, section = "", teacher = "") {
 }
 
 const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
-    const proxyState = useProxy(window.state);
+    const globalState = useProxy(window.state);
 
     useEffect(() => {
         if (!localStorage.selectedSection && !localStorage.selectedTeacher) localStorage.selectedSection = '8A';
-        proxyState.selectedSection = proxyState.selectedSection || localStorage.selectedSection;
-        if (!proxyState.selectedSection) proxyState.selectedTeacher = proxyState.selectedTeacher || localStorage.selectedTeacher;
+        globalState.selectedSection = globalState.selectedSection || localStorage.selectedSection;
+        if (!globalState.selectedSection) globalState.selectedTeacher = globalState.selectedTeacher || localStorage.selectedTeacher;
 
         let sub = (
             selector, cb
@@ -310,14 +310,14 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
     const routineData = routine.values;
 
     DAYS = DAYS.filter(day => {
-        return extractRoutineFiltered(routine.values, proxyState.selectedSection, proxyState.selectedTeacher).some(cell => cell.day === day);
+        return extractRoutineFiltered(routine.values, globalState.selectedSection, globalState.selectedTeacher).some(cell => cell.day === day);
     });
     TIME_SLOTS = TIME_SLOTS.filter(time => {
-        return extractRoutineFiltered(routine.values, proxyState.selectedSection, proxyState.selectedTeacher).some(cell => cell.time === time);
+        return extractRoutineFiltered(routine.values, globalState.selectedSection, globalState.selectedTeacher).some(cell => cell.time === time);
     });
 
     const findScheduleItem = (day, time) => {
-        const routineDataExtracted = extractRoutineFiltered(routine.values, proxyState.selectedSection, proxyState.selectedTeacher);
+        const routineDataExtracted = extractRoutineFiltered(routine.values, globalState.selectedSection, globalState.selectedTeacher);
         return routineDataExtracted.find(item => item.day === day && item.time === time);
     };
     async function handleDownload(e) {
@@ -535,7 +535,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
 
 
 
-    if (!proxyState.sheetData?.values)
+    if (!globalState.sheetData?.values)
         return (<div className="w-full h-full flex items-center justify-center">
             <div className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full mx-auto" role="status" aria-label="loading"><span className="sr-only">Loading...</span></div>
         </div>);
@@ -543,7 +543,7 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
     return (
         <div className="w-full grow flex flex-col bg-white p-6 max-w-6xl mx-auto rounded-lg ">
             <div className="flex gap-4 justify-center">
-                {proxyState.sheetData && (
+                {globalState.sheetData && (
                     <>
                         <FormControl sx={{ width: '100%' }}>
                             <InputLabel id="section-select-label">Section</InputLabel>
@@ -552,10 +552,10 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                                 id="section-select"
                                 label="Section"
                                 displayEmpty
-                                value={proxyState.selectedSection || ''}
-                                onChange={(e) => { proxyState.selectedSection = e.target.value; proxyState.selectedTeacher = ''; if (proxyState.selectedSection == '' && proxyState.selectedTeacher == '') proxyState.selectedSection = '8A' }}
+                                value={globalState.selectedSection || ''}
+                                onChange={(e) => { globalState.selectedSection = e.target.value; globalState.selectedTeacher = ''; if (globalState.selectedSection == '' && globalState.selectedTeacher == '') globalState.selectedSection = '8A' }}
                             >
-                                {([...new Set(extractRoutine(proxyState.sheetData?.values || []).map(item => item.section))]).sort((a, b) => {
+                                {([...new Set(extractRoutine(globalState.sheetData?.values || []).map(item => item.section))]).sort((a, b) => {
                                     let numberA = a.match(/\d+/)?.[0] || 0;
                                     let characterA = a.match(/[a-zA-Z]+/)?.[0] || '';
                                     let numberB = b.match(/\d+/)?.[0] || 0;
@@ -578,10 +578,10 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
                                 id="teacher-select"
                                 label="Teacher"
                                 displayEmpty
-                                value={proxyState.selectedTeacher || ''}
-                                onChange={(e) => { proxyState.selectedTeacher = e.target.value; proxyState.selectedSection = ''; if (proxyState.selectedSection == '' && proxyState.selectedTeacher == '') proxyState.selectedSection = '8A' }}
+                                value={globalState.selectedTeacher || ''}
+                                onChange={(e) => { globalState.selectedTeacher = e.target.value; globalState.selectedSection = ''; if (globalState.selectedSection == '' && globalState.selectedTeacher == '') globalState.selectedSection = '8A' }}
                             >
-                                {([...new Set(extractRoutine(proxyState.sheetData?.values || []).map(item => item.teacher))]).sort((a, b) => {
+                                {([...new Set(extractRoutine(globalState.sheetData?.values || []).map(item => item.teacher))]).sort((a, b) => {
                                     let numberA = a.match(/\d+/)?.[0] || 0;
                                     let characterA = a.match(/[a-zA-Z]+/)?.[0] || '';
                                     let numberB = b.match(/\d+/)?.[0] || 0;
@@ -721,15 +721,15 @@ const ScheduleTable = ({ routine, modifiedTime, spreadsheetId }) => {
 
 
 const Home = () => {
-    const proxyState = useProxy(window.state);
+    const globalState = useProxy(window.state);
 
     // If auth is still loading, don't render anything
-    if (proxyState.authLoading) {
+    if (globalState.authLoading) {
         return null;
     }
 
     return <div className="h-full w-full">
-        {proxyState.sheetData && <ScheduleTable routine={proxyState.sheetData} modifiedTime={proxyState.modifiedTime} spreadsheetId={proxyState.spreadsheetId} />
+        {globalState.sheetData && <ScheduleTable routine={globalState.sheetData} modifiedTime={globalState.modifiedTime} spreadsheetId={globalState.spreadsheetId} />
             || <div className="w-full h-full flex items-center justify-center">
                 <div className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full mx-auto" role="status" aria-label="loading"><span className="sr-only">Loading...</span></div>
             </div>}

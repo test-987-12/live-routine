@@ -24,7 +24,7 @@ const auth = getAuth(app);
 function AuthPage() {
     const navigate = useNavigate();
     // Check if user is already logged in using the global state
-    const proxyState = useProxy(window.state);
+    const globalState = useProxy(window.state);
     const [redirecting, setRedirecting] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -45,20 +45,20 @@ function AuthPage() {
     // Check if user is already logged in and redirect if needed
     useEffect(() => {
         // If user is logged in (not anonymously) and email is verified (or using a different auth method)
-        if (proxyState.user && !proxyState.isAnonymous &&
-            (proxyState.emailVerified || proxyState.user.providerData[0]?.providerId !== 'password')) {
+        if (globalState.user && !globalState.isAnonymous &&
+            (globalState.emailVerified || globalState.user.providerData[0]?.providerId !== 'password')) {
             console.log("User already logged in, redirecting to home page");
             setRedirecting(true);
             // Use a short timeout to prevent any UI flicker
             setTimeout(() => {
                 window.location.hash = "#/";
             }, 10);
-        } else if (proxyState.user && proxyState.isAnonymous) {
+        } else if (globalState.user && globalState.isAnonymous) {
             // If user is anonymous, sign them out so they can sign in properly
             // console.log("User is anonymous, signing out to allow proper sign in");
             // signOut(auth);
         }
-    }, [proxyState.user, proxyState.emailVerified, proxyState.isAnonymous]);
+    }, [globalState.user, globalState.emailVerified, globalState.isAnonymous]);
 
     // State to track if we need to show the Google sign-in button for password setup
     const [showGoogleSignInForPasswordSetup, setShowGoogleSignInForPasswordSetup] = useState(false);
@@ -496,7 +496,7 @@ function AuthPage() {
     };
 
     // If auth is still loading or user is already logged in and being redirected, show nothing to prevent UI flicker
-    if (proxyState.authLoading || redirecting) {
+    if (globalState.authLoading || redirecting) {
         return null;
     }
 
