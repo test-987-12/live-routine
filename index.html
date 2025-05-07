@@ -166,6 +166,7 @@
     const { default: AuthPage } = await utils.dynamicImport('AuthPage.jsx'); // Import the AuthPage component
     window.AuthPage = AuthPage; // Make AuthPage available globally
     const { default: ProfilePage } = await utils.dynamicImport('ProfilePage.jsx'); // Import the ProfilePage component
+    const { default: HistoryPage } = await utils.dynamicImport('HistoryPage.jsx'); // Import the HistoryPage component
 
     // Auth state listener
     onAuthStateChanged(auth, (user) => {
@@ -503,6 +504,35 @@
                             <ListItemText primary="Profile" />
                           </ListItemButton>
                         </ListItem>
+                        <ListItem disablePadding>
+                          <ListItemButton
+                            component={Link}
+                            to="/history"
+                            sx={{
+                              position: 'relative',
+                              borderRadius: '8px',
+                              backgroundColor: currentPath === '/history' ? 'rgba(229, 231, 235, 1)' : 'transparent',
+                              '&:hover': {
+                                backgroundColor: currentPath === '/history' ? 'rgba(229, 231, 235, 1)' : 'rgba(229, 231, 235, 0.5)'
+                              },
+                              '&::before': currentPath === '/history' ? {
+                                content: '""',
+                                position: 'absolute',
+                                left: 0,
+                                top: '20%',
+                                height: '60%',
+                                width: '4px',
+                                backgroundColor: '#2563eb', // blue-600
+                                borderRadius: '0 3px 3px 0'
+                              } : {}
+                            }}
+                          >
+                            <ListItemIcon>
+                              <Icons.History />
+                            </ListItemIcon>
+                            <ListItemText primary="History" />
+                          </ListItemButton>
+                        </ListItem>
                       </List>
                     </div>
                   </div>
@@ -513,6 +543,7 @@
                       <Route path="/" element={<HomePage />} />
                       <Route path="/notifications" element={<SettingsPage />} />
                       <Route path="/profile" element={<ProfilePage />} />
+                      <Route path="/history" element={<HistoryPage />} />
                     </Routes>
                   </main>
                 </div>
@@ -545,6 +576,20 @@
                 value="/notifications"
                 label="Notifications"
                 icon={<Icons.Notifications />}
+                sx={{
+                  '&.Mui-selected': {
+                    color: '#2563eb',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(229, 231, 235, 0.5)'
+                  }
+                }}
+              />
+              <BottomNavigationAction
+                component={Link}
+                to="/history"
+                value="/history"
+                label="History"
+                icon={<Icons.History />}
                 sx={{
                   '&.Mui-selected': {
                     color: '#2563eb',

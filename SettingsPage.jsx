@@ -290,7 +290,7 @@ let loadPrefs = (async () => {
 });
 
 const NotificationSettings = () => {
-  const proxyState = useProxy(window.state);
+  const globalState = useProxy(window.state);
   const [isLoading, setIsLoading] = useState(true);
   const [inputValues, setInputValues] = useState({
     section: '',
@@ -301,7 +301,7 @@ const NotificationSettings = () => {
   useEffect(() => {
     (async () => {
       // Sign in anonymously if not logged in
-      if (!proxyState.user) {
+      if (!globalState.user) {
         console.log("SettingsPage: User not logged in, signing in anonymously");
         window.signInAnonymously().then(async () => {
           await loadPrefs();
@@ -312,7 +312,7 @@ const NotificationSettings = () => {
         setIsLoading(false);
       }
     })()
-  }, [proxyState.user]);
+  }, [globalState.user]);
 
   const subscribeNotifications = async () => {
     const messaging = getMessaging(app);
@@ -323,7 +323,7 @@ const NotificationSettings = () => {
     localStorage.notificationToken = currentToken;
 
     const permissionGranted = await Notification.requestPermission() === 'granted';
-    if (!currentToken && permissionGranted && proxyState.pushEnabled) {
+    if (!currentToken && permissionGranted && globalState.pushEnabled) {
       utils.notify('Push notifications could not be enabled', 'Please check your browser settings', '#F44336');
       return;
     }
@@ -335,14 +335,14 @@ const NotificationSettings = () => {
       id: state.user.uid,
       utctimestamp: Date.now(),
       anonymous: state.user.isAnonymous,
-      enabled: !!proxyState.pushEnabled,
-      emailEnabled: !!proxyState.emailEnabled,
+      enabled: !!globalState.pushEnabled,
+      emailEnabled: !!globalState.emailEnabled,
       email: state.user.email,
       token: currentToken,
       tags: {
-        section: proxyState.sectionTags,
-        course: proxyState.courseTags,
-        teacher: proxyState.teacherTags
+        section: globalState.sectionTags,
+        course: globalState.courseTags,
+        teacher: globalState.teacherTags
       }
     };
 
@@ -363,12 +363,12 @@ const NotificationSettings = () => {
   const handlePushToggle = async () => {
     const permissionGranted = await Notification.requestPermission() === 'granted';
     if (!permissionGranted) return utils.notify?.('Notification permission not granted', 'Change from Site Settings');
-    proxyState.pushEnabled = !proxyState.pushEnabled;
+    globalState.pushEnabled = !globalState.pushEnabled;
     subscribeNotifications();
   };
 
   const handleEmailToggle = async () => {
-    proxyState.emailEnabled = !proxyState.emailEnabled;
+    globalState.emailEnabled = !globalState.emailEnabled;
     subscribeNotifications();
   };
 
@@ -381,7 +381,7 @@ const NotificationSettings = () => {
 
   // Extract unique values from routine data
   const getUniqueOptions = (field) => {
-    const routineData = extractRoutine(proxyState.sheetData?.values || []);
+    const routineData = extractRoutine(globalState.sheetData?.values || []);
     return [...new Set(routineData.map(item => item[field]))].sort((a, b) => {
       let numberA = a.match(/\d+/)?.[0] || 0;
       let characterA = a.match(/[a-zA-Z]+/)?.[0] || '';
@@ -397,14 +397,14 @@ const NotificationSettings = () => {
 
   // Tag selection change handler
   const handleTagsChange = async (field, newValue) => {
-    proxyState[`${field}Tags`] = newValue;
+    globalState[`${field}Tags`] = newValue;
     const permissionGranted = await Notification.requestPermission() === 'granted';
     if (!permissionGranted) return utils.notify?.('Notification permission not granted', 'Change from Site Settings');
     subscribeNotifications();
   };
 
   // Don't render anything if auth is still loading
-  if (proxyState.authLoading) {
+  if (globalState.authLoading) {
     return null;
   }
 
@@ -424,10 +424,10 @@ const NotificationSettings = () => {
     );
   }
 
-  const noTagsSelected = (proxyState.pushEnabled || proxyState.emailEnabled) &&
-    proxyState.sectionTags?.length === 0 &&
-    proxyState.courseTags?.length === 0 &&
-    proxyState.teacherTags?.length === 0;
+  const noTagsSelected = (globalState.pushEnabled || globalState.emailEnabled) &&
+    globalState.sectionTags?.length === 0 &&
+    globalState.courseTags?.length === 0 &&
+    globalState.teacherTags?.length === 0;
 
 
   return (
@@ -436,7 +436,7 @@ const NotificationSettings = () => {
 
         <div className="p-6">
           {/* Anonymous user message */}
-          {proxyState.isAnonymous && (
+          {globalState.isAnonymous && (
             <Box className="mb-4 p-2 bg-blue-50 rounded-md">
               <Typography variant="body2" color="primary">
                 You are currently using the app anonymously. <a href="#/auth" className="text-blue-600 underline">Sign in</a> to save your preferences.
@@ -456,7 +456,7 @@ const NotificationSettings = () => {
                 </Typography>
               </div>
               <Switch
-                checked={proxyState.pushEnabled}
+                checked={globalState.pushEnabled}
                 onChange={handlePushToggle}
                 color="primary"
               />
@@ -473,7 +473,7 @@ const NotificationSettings = () => {
                 <Typography variant="body2" className="text-gray-600 mt-1">
                   Receive schedule updates via email
                 </Typography>
-                {proxyState.isAnonymous && proxyState.emailEnabled && (
+                {globalState.isAnonymous && globalState.emailEnabled && (
                   <Typography variant="body2" className="text-orange-600 mt-1">
                     <Icons.Info fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
                     Sign in to receive email notifications
@@ -481,7 +481,7 @@ const NotificationSettings = () => {
                 )}
               </div>
               <Switch
-                checked={proxyState.emailEnabled}
+                checked={globalState.emailEnabled}
                 onChange={handleEmailToggle}
                 color="primary"
               />
@@ -515,7 +515,7 @@ const NotificationSettings = () => {
           )}
 
 
-          {(proxyState.pushEnabled || proxyState.emailEnabled) ? (
+          {(globalState.pushEnabled || globalState.emailEnabled) ? (
             <>
               <Typography variant="h6" className="text-gray-800 mb-4">
                 Notification Filters
@@ -534,7 +534,7 @@ const NotificationSettings = () => {
                   <Autocomplete
                     multiple
                     options={getUniqueOptions('section')}
-                    value={proxyState.sectionTags || []}
+                    value={globalState.sectionTags || []}
                     onChange={(_, newValue) => handleTagsChange('section', newValue)}
                     inputValue={inputValues.section}
                     onInputChange={(_, value) => handleInputChange('section', value)}
@@ -569,7 +569,7 @@ const NotificationSettings = () => {
                   <Autocomplete
                     multiple
                     options={getUniqueOptions('course')}
-                    value={proxyState.courseTags || []}
+                    value={globalState.courseTags || []}
                     onChange={(_, newValue) => handleTagsChange('course', newValue)}
                     inputValue={inputValues.course}
                     onInputChange={(_, value) => handleInputChange('course', value)}
@@ -604,7 +604,7 @@ const NotificationSettings = () => {
                   <Autocomplete
                     multiple
                     options={getUniqueOptions('teacher')}
-                    value={proxyState.teacherTags || []}
+                    value={globalState.teacherTags || []}
                     onChange={(_, newValue) => handleTagsChange('teacher', newValue)}
                     inputValue={inputValues.teacher}
                     onInputChange={(_, value) => handleInputChange('teacher', value)}
@@ -663,7 +663,7 @@ const NotificationSettings = () => {
                   </div>
                 </Typography>
 
-                {proxyState.emailEnabled && (
+                {globalState.emailEnabled && (
                   <Typography variant="body2" className="text-blue-600 mt-4">
                     Email notifications are enabled. You'll receive updates via email.
                   </Typography>
